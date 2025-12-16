@@ -1,0 +1,184 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Updated theme colors for professional desktop app with cyber aesthetic */
+  --background: oklch(0.12 0.01 264);
+  --foreground: oklch(0.98 0.01 264);
+  --card: oklch(0.16 0.01 264);
+  --card-foreground: oklch(0.98 0.01 264);
+  --popover: oklch(0.14 0.01 264);
+  --popover-foreground: oklch(0.98 0.01 264);
+  --primary: oklch(0.65 0.24 264);
+  --primary-foreground: oklch(0.98 0.01 264);
+  --secondary: oklch(0.22 0.02 264);
+  --secondary-foreground: oklch(0.98 0.01 264);
+  --muted: oklch(0.25 0.02 264);
+  --muted-foreground: oklch(0.6 0.03 264);
+  --accent: oklch(0.55 0.22 192);
+  --accent-foreground: oklch(0.98 0.01 264);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.98 0.01 264);
+  --border: oklch(0.24 0.02 264);
+  --input: oklch(0.2 0.02 264);
+  --ring: oklch(0.65 0.24 264);
+  --chart-1: oklch(0.65 0.24 264);
+  --chart-2: oklch(0.55 0.22 192);
+  --chart-3: oklch(0.7 0.2 140);
+  --chart-4: oklch(0.65 0.2 320);
+  --chart-5: oklch(0.6 0.22 40);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.14 0.01 264);
+  --sidebar-foreground: oklch(0.88 0.02 264);
+  --sidebar-primary: oklch(0.65 0.24 264);
+  --sidebar-primary-foreground: oklch(0.98 0.01 264);
+  --sidebar-accent: oklch(0.2 0.02 264);
+  --sidebar-accent-foreground: oklch(0.98 0.01 264);
+  --sidebar-border: oklch(0.22 0.02 264);
+  --sidebar-ring: oklch(0.65 0.24 264);
+  --stage: oklch(0.1 0.01 264);
+  --stage-highlight: oklch(0.18 0.02 264);
+  /* Added titlebar design tokens for desktop window controls */
+  --titlebar: oklch(0.13 0.01 264);
+  --titlebar-foreground: oklch(0.8 0.02 264);
+  --titlebar-hover: oklch(0.2 0.02 264);
+}
+
+.dark {
+  --background: oklch(0.12 0.01 264);
+  --foreground: oklch(0.98 0.01 264);
+  --card: oklch(0.16 0.01 264);
+  --card-foreground: oklch(0.98 0.01 264);
+  --popover: oklch(0.14 0.01 264);
+  --popover-foreground: oklch(0.98 0.01 264);
+  --primary: oklch(0.65 0.24 264);
+  --primary-foreground: oklch(0.98 0.01 264);
+  --secondary: oklch(0.22 0.02 264);
+  --secondary-foreground: oklch(0.98 0.01 264);
+  --muted: oklch(0.25 0.02 264);
+  --muted-foreground: oklch(0.6 0.03 264);
+  --accent: oklch(0.55 0.22 192);
+  --accent-foreground: oklch(0.98 0.01 264);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.98 0.01 264);
+  --border: oklch(0.24 0.02 264);
+  --input: oklch(0.2 0.02 264);
+  --ring: oklch(0.65 0.24 264);
+  --chart-1: oklch(0.65 0.24 264);
+  --chart-2: oklch(0.55 0.22 192);
+  --chart-3: oklch(0.7 0.2 140);
+  --chart-4: oklch(0.65 0.2 320);
+  --chart-5: oklch(0.6 0.22 40);
+  --sidebar: oklch(0.14 0.01 264);
+  --sidebar-foreground: oklch(0.88 0.02 264);
+  --sidebar-primary: oklch(0.65 0.24 264);
+  --sidebar-primary-foreground: oklch(0.98 0.01 264);
+  --sidebar-accent: oklch(0.2 0.02 264);
+  --sidebar-accent-foreground: oklch(0.98 0.01 264);
+  --sidebar-border: oklch(0.22 0.02 264);
+  --sidebar-ring: oklch(0.65 0.24 264);
+  --stage: oklch(0.1 0.01 264);
+  --stage-highlight: oklch(0.18 0.02 264);
+  /* Added titlebar design tokens for desktop window controls in dark mode */
+  --titlebar: oklch(0.13 0.01 264);
+  --titlebar-foreground: oklch(0.8 0.02 264);
+  --titlebar-hover: oklch(0.2 0.02 264);
+}
+
+@theme inline {
+  --font-sans: "Geist", "Geist Fallback";
+  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-stage: var(--stage);
+  --color-stage-highlight: var(--stage-highlight);
+  /* Added titlebar color mappings */
+  --color-titlebar: var(--titlebar);
+  --color-titlebar-foreground: var(--titlebar-foreground);
+  --color-titlebar-hover: var(--titlebar-hover);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom animations for lottery rolling effect */
+@keyframes roll {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.6);
+  }
+}
+
+@keyframes confetti {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.animate-roll {
+  animation: roll 0.1s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
