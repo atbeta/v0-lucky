@@ -34,7 +34,6 @@ export function Sidebar({ collapsed, onToggle, currentView, onViewChange }: Side
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
               <Sparkles className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-sidebar-foreground">Lucky Draw</span>
           </div>
         )}
         <Button

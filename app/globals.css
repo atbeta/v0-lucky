@@ -4,46 +4,47 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Updated theme colors for professional desktop app with cyber aesthetic */
-  --background: oklch(0.12 0.01 264);
-  --foreground: oklch(0.98 0.01 264);
-  --card: oklch(0.16 0.01 264);
-  --card-foreground: oklch(0.98 0.01 264);
-  --popover: oklch(0.14 0.01 264);
-  --popover-foreground: oklch(0.98 0.01 264);
-  --primary: oklch(0.65 0.24 264);
+  /* Light mode colors */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.12 0.01 264);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.12 0.01 264);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.12 0.01 264);
+  /* Premium Deep Blue - Darker, less saturated, more professional */
+  --primary: oklch(0.5 0.18 260);
   --primary-foreground: oklch(0.98 0.01 264);
-  --secondary: oklch(0.22 0.02 264);
-  --secondary-foreground: oklch(0.98 0.01 264);
-  --muted: oklch(0.25 0.02 264);
-  --muted-foreground: oklch(0.6 0.03 264);
+  --secondary: oklch(0.96 0.01 264);
+  --secondary-foreground: oklch(0.12 0.01 264);
+  --muted: oklch(0.96 0.01 264);
+  --muted-foreground: oklch(0.45 0.01 264);
   --accent: oklch(0.55 0.22 192);
   --accent-foreground: oklch(0.98 0.01 264);
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.98 0.01 264);
-  --border: oklch(0.24 0.02 264);
-  --input: oklch(0.2 0.02 264);
-  --ring: oklch(0.65 0.24 264);
-  --chart-1: oklch(0.65 0.24 264);
+  --border: oklch(0.9 0.01 264);
+  --input: oklch(0.9 0.01 264);
+  --ring: oklch(0.5 0.18 260);
+  --chart-1: oklch(0.5 0.18 260);
   --chart-2: oklch(0.55 0.22 192);
   --chart-3: oklch(0.7 0.2 140);
   --chart-4: oklch(0.65 0.2 320);
   --chart-5: oklch(0.6 0.22 40);
   --radius: 0.5rem;
-  --sidebar: oklch(0.14 0.01 264);
-  --sidebar-foreground: oklch(0.88 0.02 264);
-  --sidebar-primary: oklch(0.65 0.24 264);
+  --sidebar: oklch(0.98 0.01 264);
+  --sidebar-foreground: oklch(0.12 0.01 264);
+  --sidebar-primary: oklch(0.5 0.18 260);
   --sidebar-primary-foreground: oklch(0.98 0.01 264);
-  --sidebar-accent: oklch(0.2 0.02 264);
-  --sidebar-accent-foreground: oklch(0.98 0.01 264);
-  --sidebar-border: oklch(0.22 0.02 264);
-  --sidebar-ring: oklch(0.65 0.24 264);
-  --stage: oklch(0.1 0.01 264);
-  --stage-highlight: oklch(0.18 0.02 264);
-  /* Added titlebar design tokens for desktop window controls */
-  --titlebar: oklch(0.13 0.01 264);
-  --titlebar-foreground: oklch(0.8 0.02 264);
-  --titlebar-hover: oklch(0.2 0.02 264);
+  --sidebar-accent: oklch(0.96 0.01 264);
+  --sidebar-accent-foreground: oklch(0.12 0.01 264);
+  --sidebar-border: oklch(0.9 0.01 264);
+  --sidebar-ring: oklch(0.5 0.18 260);
+  --stage: oklch(0.95 0.01 264);
+  --stage-highlight: oklch(0.9 0.01 264);
+  /* Titlebar design tokens for light mode */
+  --titlebar: oklch(0.98 0.01 264);
+  --titlebar-foreground: oklch(0.12 0.01 264);
+  --titlebar-hover: oklch(0.94 0.01 264);
 }
 
 .dark {
@@ -53,7 +54,8 @@
   --card-foreground: oklch(0.98 0.01 264);
   --popover: oklch(0.14 0.01 264);
   --popover-foreground: oklch(0.98 0.01 264);
-  --primary: oklch(0.65 0.24 264);
+  /* Premium Deep Blue for Dark Mode */
+  --primary: oklch(0.6 0.18 260);
   --primary-foreground: oklch(0.98 0.01 264);
   --secondary: oklch(0.22 0.02 264);
   --secondary-foreground: oklch(0.98 0.01 264);
@@ -65,20 +67,20 @@
   --destructive-foreground: oklch(0.98 0.01 264);
   --border: oklch(0.24 0.02 264);
   --input: oklch(0.2 0.02 264);
-  --ring: oklch(0.65 0.24 264);
-  --chart-1: oklch(0.65 0.24 264);
+  --ring: oklch(0.6 0.18 260);
+  --chart-1: oklch(0.6 0.18 260);
   --chart-2: oklch(0.55 0.22 192);
   --chart-3: oklch(0.7 0.2 140);
   --chart-4: oklch(0.65 0.2 320);
   --chart-5: oklch(0.6 0.22 40);
   --sidebar: oklch(0.14 0.01 264);
   --sidebar-foreground: oklch(0.88 0.02 264);
-  --sidebar-primary: oklch(0.65 0.24 264);
+  --sidebar-primary: oklch(0.6 0.18 260);
   --sidebar-primary-foreground: oklch(0.98 0.01 264);
   --sidebar-accent: oklch(0.2 0.02 264);
   --sidebar-accent-foreground: oklch(0.98 0.01 264);
   --sidebar-border: oklch(0.22 0.02 264);
-  --sidebar-ring: oklch(0.65 0.24 264);
+  --sidebar-ring: oklch(0.6 0.18 260);
   --stage: oklch(0.1 0.01 264);
   --stage-highlight: oklch(0.18 0.02 264);
   /* Added titlebar design tokens for desktop window controls in dark mode */
@@ -181,4 +183,56 @@
 
 .animate-glow {
   animation: glow 2s ease-in-out infinite;
+}
+
+/* VSCode-like Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* Show scrollbar on hover */
+*:hover::-webkit-scrollbar-thumb {
+  background-color: var(--muted-foreground);
+  opacity: 0.5;
+}
+
+/* Active state */
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--primary);
+}
+
+/* Corner */
+::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+
+/* Hide scrollbar buttons (up/down arrows) */
+::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Firefox support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.2s ease;
+}
+
+*:hover {
+  scrollbar-color: var(--muted-foreground) transparent;
 }

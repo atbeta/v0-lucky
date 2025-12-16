@@ -6,13 +6,15 @@ import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Settings, Volume2, Eye, RefreshCw, Download, Upload } from "lucide-react"
+import { Settings, Volume2, Eye, RefreshCw, Download, Upload, Moon, Sun, Laptop } from "lucide-react"
+import { useTheme } from "next-themes"
 
 export function SettingsView() {
   const [hideNamesWhileRolling, setHideNamesWhileRolling] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [animationSpeed, setAnimationSpeed] = useState("normal")
   const [particleEffects, setParticleEffects] = useState(true)
+  const { theme, setTheme } = useTheme()
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -30,6 +32,47 @@ export function SettingsView() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6">
         <div className="mx-auto max-w-3xl space-y-8">
+          {/* Theme Settings */}
+          <section className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Sun className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-semibold">外观设置</h3>
+            </div>
+            <div className="space-y-3 rounded-xl border border-border/50 bg-card/30 p-6">
+              <div className="space-y-3 rounded-lg border border-border/50 bg-background/50 p-4">
+                <Label className="text-sm font-medium">
+                  主题模式
+                </Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <Button 
+                    variant={theme === "light" ? "default" : "outline"} 
+                    className="justify-center gap-2"
+                    onClick={() => setTheme("light")}
+                  >
+                    <Sun className="h-4 w-4" />
+                    浅色
+                  </Button>
+                  <Button 
+                    variant={theme === "dark" ? "default" : "outline"} 
+                    className="justify-center gap-2"
+                    onClick={() => setTheme("dark")}
+                  >
+                    <Moon className="h-4 w-4" />
+                    深色
+                  </Button>
+                  <Button 
+                    variant={theme === "system" ? "default" : "outline"} 
+                    className="justify-center gap-2"
+                    onClick={() => setTheme("system")}
+                  >
+                    <Laptop className="h-4 w-4" />
+                    跟随系统
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* Display Settings */}
           <section className="space-y-4">
             <div className="flex items-center gap-2">
@@ -97,49 +140,6 @@ export function SettingsView() {
                   音量
                 </Label>
                 <Input id="volume" type="range" min="0" max="100" defaultValue="50" disabled={!soundEnabled} />
-              </div>
-            </div>
-          </section>
-
-          {/* Data Management */}
-          <section className="space-y-4">
-            <div className="flex items-center gap-2">
-              <RefreshCw className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">数据管理</h3>
-            </div>
-            <div className="space-y-3 rounded-xl border border-border/50 bg-card/30 p-6">
-              <div className="grid gap-3 md:grid-cols-2">
-                <Button variant="outline" className="justify-start gap-2 bg-transparent">
-                  <Download className="h-4 w-4" />
-                  导出配置
-                </Button>
-                <Button variant="outline" className="justify-start gap-2 bg-transparent">
-                  <Upload className="h-4 w-4" />
-                  导入配置
-                </Button>
-              </div>
-
-              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-                <div className="mb-3">
-                  <Label className="text-sm font-medium text-destructive">危险操作</Label>
-                  <p className="mt-1 text-xs text-muted-foreground">以下操作不可逆，请谨慎使用</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs text-destructive border-destructive/30 bg-transparent"
-                  >
-                    清空历史记录
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs text-destructive border-destructive/30 bg-transparent"
-                  >
-                    恢复默认设置
-                  </Button>
-                </div>
               </div>
             </div>
           </section>
