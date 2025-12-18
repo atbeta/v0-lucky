@@ -9,6 +9,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { cn } from "@/lib/utils"
 import { Target, Trophy, Plus, Trash2, Info, Volume2, VolumeX } from "lucide-react"
 
+interface TournamentRound {
+  id: number
+  count: number
+  name: string
+}
+
 interface DrawConfigViewProps {
   mode: "classic" | "tournament"
   onModeChange: (mode: "classic" | "tournament") => void
@@ -17,6 +23,23 @@ interface DrawConfigViewProps {
   soundEnabled: boolean
   onSoundToggle: () => void
   participantCount: number
+  onGoToDraw: () => void
+  
+  // Classic Config
+  classicCount: number
+  onClassicCountChange: (count: number) => void
+  classicMethod: "all" | "one-by-one" | "batch"
+  onClassicMethodChange: (method: "all" | "one-by-one" | "batch") => void
+  batchSize: number
+  onBatchSizeChange: (size: number) => void
+  
+  // Tournament Config
+  tournamentRounds: TournamentRound[]
+  onTournamentRoundsChange: (rounds: TournamentRound[]) => void
+  
+  // Common
+  prizeName: string
+  onPrizeNameChange: (name: string) => void
 }
 
 export function DrawConfigView({
@@ -27,31 +50,31 @@ export function DrawConfigView({
   soundEnabled,
   onSoundToggle,
   participantCount,
+  onGoToDraw,
+  classicCount,
+  onClassicCountChange,
+  classicMethod,
+  onClassicMethodChange,
+  batchSize,
+  onBatchSizeChange,
+  tournamentRounds,
+  onTournamentRoundsChange,
+  prizeName,
+  onPrizeNameChange,
 }: DrawConfigViewProps) {
-  const [classicCount, setClassicCount] = useState(5)
-  const [classicMethod, setClassicMethod] = useState<"all" | "one-by-one" | "batch">("one-by-one")
-  const [batchSize, setBatchSize] = useState(2)
-  const [prizeName, setPrizeName] = useState("")
-
-  const [tournamentRounds, setTournamentRounds] = useState([
-    { id: 1, count: 5, name: "" },
-    { id: 2, count: 3, name: "" },
-    { id: 3, count: 1, name: "" },
-  ])
-
   const addTournamentRound = () => {
     const newId = Math.max(...tournamentRounds.map((r) => r.id), 0) + 1
-    setTournamentRounds([...tournamentRounds, { id: newId, count: 1, name: "" }])
+    onTournamentRoundsChange([...tournamentRounds, { id: newId, count: 1, name: "" }])
   }
 
   const removeTournamentRound = (id: number) => {
     if (tournamentRounds.length > 1) {
-      setTournamentRounds(tournamentRounds.filter((r) => r.id !== id))
+      onTournamentRoundsChange(tournamentRounds.filter((r) => r.id !== id))
     }
   }
 
   const updateRoundCount = (id: number, count: number) => {
-    setTournamentRounds(tournamentRounds.map((r) => (r.id === id ? { ...r, count } : r)))
+    onTournamentRoundsChange(tournamentRounds.map((r) => (r.id === id ? { ...r, count } : r)))
   }
 
   const getTournamentSummary = () => {
@@ -148,7 +171,7 @@ export function DrawConfigView({
                     min="1"
                     max={participantCount}
                     value={classicCount}
-                    onChange={(e) => setClassicCount(Math.max(1, Number.parseInt(e.target.value) || 1))}
+                    onChange={(e) => onClassicCountChange(Math.max(1, Number.parseInt(e.target.value) || 1))}
                     className="w-24 text-center"
                   />
                   <span className="text-sm text-muted-foreground">人 / 共 {participantCount} 人</span>
@@ -161,7 +184,7 @@ export function DrawConfigView({
                   <Info className="h-4 w-4 text-muted-foreground" />
                   <Label className="text-sm font-medium">仪式感设置</Label>
                 </div>
-                <RadioGroup value={classicMethod} onValueChange={(v) => setClassicMethod(v as any)}>
+                <RadioGroup value={classicMethod} onValueChange={(v) => onClassicMethodChange(v as any)}>
                   <div className="space-y-2">
                     <div className="flex items-start gap-3 rounded-lg border border-border/50 p-3 hover:bg-accent/50 transition-colors">
                       <RadioGroupItem value="all" id="method-all" className="mt-0.5" />
@@ -200,7 +223,7 @@ export function DrawConfigView({
                               min="1"
                               max={classicCount}
                               value={batchSize}
-                              onChange={(e) => setBatchSize(Math.max(1, Number.parseInt(e.target.value) || 1))}
+                              onChange={(e) => onBatchSizeChange(Math.max(1, Number.parseInt(e.target.value) || 1))}
                               className="w-20 text-center h-8"
                             />
                             <span className="text-xs text-muted-foreground">人/次</span>
@@ -221,7 +244,7 @@ export function DrawConfigView({
                 <Input
                   placeholder="输入奖品名称"
                   value={prizeName}
-                  onChange={(e) => setPrizeName(e.target.value)}
+                  onChange={(e) => onPrizeNameChange(e.target.value)}
                   className="bg-background"
                 />
               </div>
@@ -308,7 +331,7 @@ export function DrawConfigView({
                 <Input
                   placeholder="输入奖品名称"
                   value={prizeName}
-                  onChange={(e) => setPrizeName(e.target.value)}
+                  onChange={(e) => onPrizeNameChange(e.target.value)}
                   className="bg-background"
                 />
               </div>
@@ -324,9 +347,9 @@ export function DrawConfigView({
 
       {/* Footer Action */}
       <div className="flex items-center justify-end gap-3 border-t border-border/50 bg-card/30 px-6 py-4">
-        <Button size="lg" className="gap-2">
+        <Button size="lg" className="gap-2" onClick={onGoToDraw}>
           <Target className="h-4 w-4" />
-          开始抽奖
+          去抽奖
         </Button>
       </div>
     </div>

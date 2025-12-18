@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Trash2, Users, Upload, Download, Search } from "lucide-react"
+import { Plus, Trash2, Users, Upload, Download, Search, RefreshCw } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 interface Participant {
@@ -43,6 +43,10 @@ export function ParticipantsView({ participants, onParticipantsChange }: Partici
   const handleToggleExclude = (id: number) => {
     onParticipantsChange(participants.map((p) => (p.id === id ? { ...p, excluded: !p.excluded } : p)))
   }
+  
+  const handleRestoreAll = () => {
+    onParticipantsChange(participants.map((p) => ({ ...p, excluded: false })))
+  }
 
   const filteredParticipants = participants.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
 
@@ -72,6 +76,10 @@ export function ParticipantsView({ participants, onParticipantsChange }: Partici
           <Button variant="outline" size="sm" className="gap-2 bg-transparent">
             <Download className="h-4 w-4" />
             导出
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleRestoreAll} className="gap-2 bg-transparent text-primary hover:text-primary">
+            <RefreshCw className="h-4 w-4" />
+            全部恢复
           </Button>
         </div>
       </div>

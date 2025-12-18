@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Users, Trophy, TrendingUp } from "lucide-react"
+import { Users, Trophy, TrendingUp, Target, List } from "lucide-react"
 
 interface Participant {
   id: number
@@ -15,9 +15,23 @@ interface InspectorProps {
   mode: "classic" | "tournament"
   participants: Participant[]
   onModeChange: (mode: "classic" | "tournament") => void
+  // Classic Config
+  classicCount: number
+  classicMethod: "all" | "one-by-one" | "batch"
+  batchSize: number
+  // Tournament Config
+  tournamentRounds: { id: number; count: number; name: string }[]
 }
 
-export function Inspector({ mode, participants, onModeChange }: InspectorProps) {
+export function Inspector({ 
+  mode, 
+  participants, 
+  onModeChange,
+  classicCount,
+  classicMethod,
+  batchSize,
+  tournamentRounds
+}: InspectorProps) {
   const availableCount = participants.filter((p) => !p.excluded).length
   const excludedCount = participants.filter((p) => p.excluded).length
 
@@ -46,6 +60,53 @@ export function Inspector({ mode, participants, onModeChange }: InspectorProps) 
             >
               晋级模式
             </Button>
+          </div>
+        </div>
+        
+        {/* Config Summary */}
+        <div className="mb-6 space-y-2">
+          <label className="text-xs font-medium text-muted-foreground">规则配置</label>
+          <div className="rounded-lg border border-border bg-background p-3 space-y-3">
+             {mode === "classic" ? (
+               <>
+                 <div className="flex items-center justify-between text-sm">
+                   <div className="flex items-center gap-2 text-muted-foreground">
+                      <Target className="h-4 w-4" />
+                      <span>中奖人数</span>
+                   </div>
+                   <span className="font-medium">{classicCount} 人</span>
+                 </div>
+                 <div className="flex items-center justify-between text-sm">
+                   <div className="flex items-center gap-2 text-muted-foreground">
+                      <List className="h-4 w-4" />
+                      <span>抽取方式</span>
+                   </div>
+                   <span className="font-medium">
+                     {classicMethod === "all" && "一次性全部"}
+                     {classicMethod === "one-by-one" && "逐个抽取"}
+                     {classicMethod === "batch" && `分批 (${batchSize}人/次)`}
+                   </span>
+                 </div>
+               </>
+             ) : (
+               <>
+                 <div className="flex items-center justify-between text-sm mb-2">
+                   <div className="flex items-center gap-2 text-muted-foreground">
+                      <List className="h-4 w-4" />
+                      <span>晋级轮次</span>
+                   </div>
+                   <span className="font-medium">{tournamentRounds.length} 轮</span>
+                 </div>
+                 <div className="space-y-1.5 pt-1 border-t border-border/50">
+                    {tournamentRounds.map((round, idx) => (
+                       <div key={idx} className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">第{idx + 1}轮 ({round.name})</span>
+                          <span className="font-mono">晋级 {round.count} 人</span>
+                       </div>
+                    ))}
+                 </div>
+               </>
+             )}
           </div>
         </div>
 
@@ -79,19 +140,6 @@ export function Inspector({ mode, participants, onModeChange }: InspectorProps) 
               </div>
               <Badge variant="secondary">{participants.length}</Badge>
             </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mt-6">
-          <label className="mb-2 block text-xs font-medium text-muted-foreground">快捷操作</label>
-          <div className="space-y-2">
-            <Button variant="outline" size="sm" className="w-full justify-start text-xs bg-transparent">
-              导出结果
-            </Button>
-            <Button variant="outline" size="sm" className="w-full justify-start text-xs bg-transparent">
-              清空历史
-            </Button>
           </div>
         </div>
       </div>

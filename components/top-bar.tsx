@@ -13,14 +13,7 @@ interface TopBarProps {
 
 export function TopBar({ mode, focusMode, onToggleFocus, onToggleInspector }: TopBarProps) {
   return (
-    <div className="flex h-12 items-center justify-between border-b border-border/50 bg-card/50 px-4">
-      <div className="flex items-center gap-4">
-        <h1 className="text-sm font-semibold text-foreground/90">抽奖大厅</h1>
-        <Badge variant="secondary" className="text-xs">
-          {mode === "classic" ? "经典模式" : "晋级模式"}
-        </Badge>
-      </div>
-
+    <div className="flex h-12 items-center justify-end border-b border-border/50 bg-card/50 px-4">
       <div className="flex items-center gap-1">
         <Button variant="ghost" size="sm" onClick={onToggleInspector} className="h-7 px-2.5 text-xs">
           {focusMode ? (

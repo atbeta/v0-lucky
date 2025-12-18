@@ -28,7 +28,7 @@ export function Sidebar({ collapsed, onToggle, currentView, onViewChange }: Side
       )}
     >
       {/* Header */}
-      <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4">
+      <div className="flex h-12 items-center justify-between border-b border-sidebar-border px-4">
         {!collapsed && (
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">

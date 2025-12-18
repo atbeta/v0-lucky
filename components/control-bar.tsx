@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Play, Square, RotateCcw, Copy } from "lucide-react"
+import { Play, Square, RotateCcw, Copy, ChevronRight } from "lucide-react"
 
 interface ControlBarProps {
   isDrawing: boolean
@@ -9,9 +9,25 @@ interface ControlBarProps {
   onStopDraw: () => void
   onReset: () => void
   winners: string[]
+  showNextRound?: boolean
+  onNextRound?: () => void
+  isFinalRound?: boolean
+  isRoundFinished?: boolean
+  isClassicFinished?: boolean
 }
 
-export function ControlBar({ isDrawing, onStartDraw, onStopDraw, onReset, winners }: ControlBarProps) {
+export function ControlBar({ 
+  isDrawing, 
+  onStartDraw, 
+  onStopDraw, 
+  onReset, 
+  winners,
+  showNextRound,
+  onNextRound,
+  isFinalRound,
+  isRoundFinished,
+  isClassicFinished
+}: ControlBarProps) {
   const handleCopy = () => {
     if (winners.length > 0) {
       navigator.clipboard.writeText(winners.join(", "))
@@ -36,10 +52,24 @@ export function ControlBar({ isDrawing, onStartDraw, onStopDraw, onReset, winner
 
       {!isDrawing && winners.length > 0 && (
         <>
-          <Button size="lg" onClick={onStartDraw} className="gap-2 px-6">
-            <Play className="h-4 w-4" />
-            再次抽奖
-          </Button>
+          {showNextRound ? (
+            <Button size="lg" onClick={onNextRound} className="gap-2 px-6">
+              <ChevronRight className="h-4 w-4" />
+              进入下一轮
+            </Button>
+          ) : isFinalRound && isRoundFinished ? (
+            // Final round finished
+             null
+          ) : isClassicFinished ? (
+            // Classic mode finished
+            null
+          ) : (
+            <Button size="lg" onClick={onStartDraw} className="gap-2 px-6">
+              <Play className="h-4 w-4" />
+              继续抽奖
+            </Button>
+          )}
+          
           <Button size="lg" variant="outline" onClick={handleCopy} className="gap-2 px-6 bg-transparent">
             <Copy className="h-4 w-4" />
             复制结果

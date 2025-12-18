@@ -9,11 +9,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Settings, Volume2, Eye, RefreshCw, Download, Upload, Moon, Sun, Laptop } from "lucide-react"
 import { useTheme } from "next-themes"
 
-export function SettingsView() {
-  const [hideNamesWhileRolling, setHideNamesWhileRolling] = useState(false)
-  const [soundEnabled, setSoundEnabled] = useState(true)
+interface SettingsViewProps {
+  hideNamesWhileRolling: boolean
+  onHideNamesWhileRollingChange: (value: boolean) => void
+  particleEffects: boolean
+  onParticleEffectsChange: (value: boolean) => void
+  soundEnabled: boolean
+  onSoundEnabledChange: (value: boolean) => void
+}
+
+export function SettingsView({ 
+  hideNamesWhileRolling, 
+  onHideNamesWhileRollingChange, 
+  particleEffects, 
+  onParticleEffectsChange,
+  soundEnabled,
+  onSoundEnabledChange
+}: SettingsViewProps) {
   const [animationSpeed, setAnimationSpeed] = useState("normal")
-  const [particleEffects, setParticleEffects] = useState(true)
   const { theme, setTheme } = useTheme()
 
   return (
@@ -87,7 +100,7 @@ export function SettingsView() {
                   </Label>
                   <p className="text-xs text-muted-foreground">增加神秘感和悬念效果</p>
                 </div>
-                <Switch id="hide-names" checked={hideNamesWhileRolling} onCheckedChange={setHideNamesWhileRolling} />
+                <Switch id="hide-names" checked={hideNamesWhileRolling} onCheckedChange={onHideNamesWhileRollingChange} />
               </div>
 
               <div className="flex items-center justify-between rounded-lg border border-border/50 bg-background/50 p-4">
@@ -97,7 +110,7 @@ export function SettingsView() {
                   </Label>
                   <p className="text-xs text-muted-foreground">显示炫酷的视觉特效</p>
                 </div>
-                <Switch id="particle-effects" checked={particleEffects} onCheckedChange={setParticleEffects} />
+                <Switch id="particle-effects" checked={particleEffects} onCheckedChange={onParticleEffectsChange} />
               </div>
 
               <div className="space-y-3 rounded-lg border border-border/50 bg-background/50 p-4">
@@ -132,7 +145,7 @@ export function SettingsView() {
                   </Label>
                   <p className="text-xs text-muted-foreground">播放抽奖和中奖音效</p>
                 </div>
-                <Switch id="sound-enabled" checked={soundEnabled} onCheckedChange={setSoundEnabled} />
+                <Switch id="sound-enabled" checked={soundEnabled} onCheckedChange={onSoundEnabledChange} />
               </div>
 
               <div className="space-y-3 rounded-lg border border-border/50 bg-background/50 p-4">
