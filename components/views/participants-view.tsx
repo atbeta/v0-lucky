@@ -1,11 +1,24 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Users, Plus, Trash2, Upload, Download, Search, RefreshCw, UserPlus } from "lucide-react"
 import { Participant } from "@/types"
+import { useToast } from "@/hooks/use-toast"
+import { isTauri } from "@tauri-apps/api/core"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface ParticipantsViewProps {
   participants: Participant[]
@@ -16,6 +29,8 @@ export function ParticipantsView({ participants, onParticipantsChange }: Partici
   const [newName, setNewName] = useState("")
   const [newWeight, setNewWeight] = useState("1")
   const [searchQuery, setSearchQuery] = useState("")
+  const { toast } = useToast()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleAdd = () => {
     if (!newName.trim()) return
@@ -40,6 +55,216 @@ export function ParticipantsView({ participants, onParticipantsChange }: Partici
   
   const handleRestoreAll = () => {
     onParticipantsChange(participants.map((p) => ({ ...p, excluded: false })))
+    toast({
+      title: "操作成功",
+      description: "已恢复所有参与者的抽奖资格",
+    })
+  }
+
+  const handleClearAll = () => {
+    onParticipantsChange([])
+    toast({
+      title: "操作成功",
+      description: "已清空所有参与人员",
+    })
+  }
+
+  const handleExport = async () => {
+    try {
+      if (isTauri()) {
+        // Use Tauri API for saving file
+        try {
+          // Dynamically import Tauri modules
+          const { save } = await import('@tauri-apps/plugin-dialog');
+          const { writeTextFile } = await import('@tauri-apps/plugin-fs');
+          
+          const filePath = await save({
+            filters: [{
+              name: 'JSON',
+              extensions: ['json']
+            }],
+            defaultPath: `lucky-draw-participants-${new Date().toISOString().split('T')[0]}.json`
+          });
+
+          if (filePath) {
+            await writeTextFile(filePath, JSON.stringify(participants, null, 2));
+            toast({
+              title: "导出成功",
+              description: `已成功导出 ${participants.length} 名参与者数据到 ${filePath}`,
+            });
+          }
+        } catch (tauriError) {
+          console.error("Tauri export failed, falling back to browser download", tauriError);
+          // Fallback to browser download if Tauri save fails (or user cancels)
+          triggerBrowserDownload();
+        }
+      } else {
+        // Web environment
+        triggerBrowserDownload();
+      }
+    } catch (error) {
+      console.error("Export error:", error);
+      toast({
+        title: "导出失败",
+        description: "导出数据时发生错误",
+        variant: "destructive",
+      });
+    }
+  }
+
+  const triggerBrowserDownload = () => {
+    const dataStr = JSON.stringify(participants, null, 2)
+    const blob = new Blob([dataStr], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `lucky-draw-participants-${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    
+    toast({
+      title: "导出成功",
+      description: `已成功导出 ${participants.length} 名参与者数据`,
+    })
+  }
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string
+        let rawParticipants: { name: string; weight: number; excluded?: boolean }[] = []
+
+        // 1. 解析文件内容
+        if (file.name.endsWith(".json")) {
+           const parsed = JSON.parse(content)
+           if (Array.isArray(parsed)) {
+             rawParticipants = parsed.map((p: any) => ({
+               name: String(p.name || "").trim(),
+               weight: typeof p.weight === 'number' ? p.weight : 1,
+               excluded: !!p.excluded
+             }))
+           }
+        } else if (file.name.endsWith(".csv") || file.name.endsWith(".txt")) {
+           const lines = content.split(/\r?\n/).filter(line => line.trim())
+           rawParticipants = lines.map((line) => {
+             const cleanLine = line.replace(/['"]/g, '')
+             const parts = cleanLine.split(/[,，\t\s]+/)
+             const name = parts[0].trim()
+             
+             // 跳过表头
+             if (["name", "姓名", "participant", "人员"].includes(name.toLowerCase())) return null
+             
+             let weight = 1
+             if (parts.length > 1) {
+                const parsedWeight = parseInt(parts[1].trim())
+                if (!isNaN(parsedWeight) && parsedWeight > 0) {
+                    weight = parsedWeight
+                }
+             }
+             
+             return { name, weight, excluded: false }
+           }).filter(Boolean) as { name: string; weight: number; excluded?: boolean }[]
+        }
+
+        // 2. 数据清洗与验证
+        const validParticipants: Participant[] = []
+        
+        // 辅助函数：标准化名字（去除所有空格，转小写），用于比较
+        const normalize = (str: string) => String(str || "").replace(/\s+/g, "").toLowerCase()
+
+        // 使用标准化后的名字建立 Set
+        const existingNamesSet = new Set(participants.map(p => normalize(p.name)))
+        const fileInternalNamesSet = new Set<string>()
+        
+        const duplicatesInFile: string[] = []
+        const duplicatesWithExisting: string[] = []
+        const emptyNamesCount = rawParticipants.filter(p => !p.name).length
+
+        rawParticipants.forEach((p, index) => {
+          if (!p.name) return // 跳过空名字
+
+          const normalizedName = normalize(p.name)
+
+          // 1. 检测文件内部重复
+          if (fileInternalNamesSet.has(normalizedName)) {
+            duplicatesInFile.push(p.name)
+          } else {
+            fileInternalNamesSet.add(normalizedName)
+          }
+
+          // 2. 检测与现有数据重复
+          if (existingNamesSet.has(normalizedName)) {
+             duplicatesWithExisting.push(p.name)
+          }
+
+          // 无论是否重复，都添加（保留原始名字）
+          validParticipants.push({
+            id: Date.now() + index + Math.floor(Math.random() * 10000), // 增加随机数防止ID冲突
+            name: p.name,
+            weight: p.weight > 0 ? p.weight : 1,
+            excluded: p.excluded || false
+          })
+        })
+
+        // 3. 执行导入与反馈（追加模式）
+        if (validParticipants.length > 0) {
+          // 追加到现有列表
+          onParticipantsChange([...participants, ...validParticipants])
+          
+          let description = `成功追加导入 ${validParticipants.length} 名参与者。`
+          const messages = []
+          let hasDuplicates = false
+          
+          if (duplicatesWithExisting.length > 0) {
+             messages.push(`与现有列表重复: ${duplicatesWithExisting.length} 人`)
+             hasDuplicates = true
+          }
+          if (duplicatesInFile.length > 0) {
+             messages.push(`文件内重复: ${duplicatesInFile.length} 人`)
+             hasDuplicates = true
+          }
+          if (emptyNamesCount > 0) {
+             messages.push(`过滤空数据: ${emptyNamesCount} 条`)
+          }
+
+          if (messages.length > 0) {
+             description += `\n(${messages.join("，")})`
+          }
+
+          toast({
+             title: hasDuplicates ? "导入完成（包含重复人员）" : "导入成功",
+             description: description,
+             variant: hasDuplicates ? "destructive" : "default", // 使用 destructive 样式以引起注意
+             className: "whitespace-pre-wrap"
+          })
+        } else {
+           toast({
+             title: "导入无效",
+             description: "文件中未发现有效的参与者数据" + (duplicates.length > 0 ? `（发现 ${duplicates.length} 个重复项）` : ""),
+             variant: "destructive"
+           })
+        }
+      } catch (err) {
+        console.error(err)
+        toast({
+           title: "导入出错",
+           description: "文件格式错误或无法解析",
+           variant: "destructive"
+        })
+      }
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+    reader.readAsText(file)
   }
 
   const filteredParticipants = participants.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -63,18 +288,47 @@ export function ParticipantsView({ participants, onParticipantsChange }: Partici
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Upload className="h-4 w-4" />
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            className="hidden" 
+            accept=".json,.csv,.txt"
+          />
+          <Button variant="outline" className="gap-2" onClick={handleImportClick}>
+            <Download className="h-4 w-4" />
             导入
           </Button>
-          <Button variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
+          <Button variant="outline" className="gap-2" onClick={handleExport}>
+            <Upload className="h-4 w-4" />
             导出
           </Button>
           <Button variant="outline" onClick={handleRestoreAll} className="gap-2 text-primary hover:text-primary hover:bg-primary/10 border-primary/20">
             <RefreshCw className="h-4 w-4" />
             全部恢复
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20">
+                <Trash2 className="h-4 w-4" />
+                全部删除
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>确认清空所有参与人员？</AlertDialogTitle>
+                <AlertDialogDescription>
+                  此操作将删除当前列表中所有 {participants.length} 名参与人员，此操作无法撤销。
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>取消</AlertDialogCancel>
+                <AlertDialogAction onClick={handleClearAll} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                  确认删除
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </header>
 

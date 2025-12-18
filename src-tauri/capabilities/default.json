@@ -11,6 +11,31 @@
     "core:window:allow-maximize",
     "core:window:allow-toggle-maximize",
     "core:window:allow-close",
-    "core:window:allow-start-dragging"
+    "core:window:allow-start-dragging",
+    "fs:default",
+    "fs:allow-exists",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file",
+    "fs:allow-write-file",
+    "fs:allow-read-file",
+    "fs:allow-home-write",
+    "fs:allow-home-write-recursive",
+    "fs:allow-document-write",
+    "fs:allow-document-write-recursive",
+    "fs:allow-download-write",
+    "fs:allow-download-write-recursive",
+    "fs:allow-desktop-write",
+    "fs:allow-desktop-write-recursive",
+    "fs:allow-app-write",
+    "fs:allow-app-write-recursive",
+    "fs:allow-appdata-write",
+    "fs:allow-appdata-write-recursive",
+    "fs:allow-resource-write",
+    "fs:allow-resource-write-recursive",
+    {
+      "identifier": "fs:scope",
+      "allow": ["**"]
+    },
+    "dialog:default"
   ]
 }

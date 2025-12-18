@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
-import { Target, Trophy, Plus, Trash2, Info, Volume2, VolumeX } from "lucide-react"
+import { Target, Trophy, Plus, Trash2, Info, Volume2, VolumeX, RotateCcw } from "lucide-react"
 
 interface TournamentRound {
   id: number
@@ -40,6 +41,8 @@ interface DrawConfigViewProps {
   // Common
   prizeName: string
   onPrizeNameChange: (name: string) => void
+  isDrawing?: boolean
+  onResetConfig?: () => void
 }
 
 export function DrawConfigView({
@@ -61,6 +64,8 @@ export function DrawConfigView({
   onTournamentRoundsChange,
   prizeName,
   onPrizeNameChange,
+  isDrawing = false,
+  onResetConfig = () => {},
 }: DrawConfigViewProps) {
   const addTournamentRound = () => {
     const newId = Math.max(...tournamentRounds.map((r) => r.id), 0) + 1
@@ -74,7 +79,60 @@ export function DrawConfigView({
   }
 
   const updateRoundCount = (id: number, count: number) => {
-    onTournamentRoundsChange(tournamentRounds.map((r) => (r.id === id ? { ...r, count } : r)))
+    // Find the index of the round being updated
+    const index = tournamentRounds.findIndex(r => r.id === id);
+    if (index === -1) return;
+
+    let newCount = count;
+
+    // Constraint 1: Round 1 cannot exceed total participants
+    if (index === 0) {
+        newCount = Math.min(newCount, participantCount);
+    } 
+    // Constraint 2: Round N cannot exceed Round N-1
+    else {
+        const prevRoundCount = tournamentRounds[index - 1].count;
+        newCount = Math.min(newCount, prevRoundCount);
+    }
+
+    // Apply the change, and also propagate constraints to subsequent rounds
+    const newRounds = tournamentRounds.map((r, idx) => {
+        if (idx === index) {
+            return { ...r, count: newCount };
+        }
+        return r;
+    });
+
+    // Propagate: Ensure subsequent rounds do not exceed their previous round
+    for (let i = index + 1; i < newRounds.length; i++) {
+        if (newRounds[i].count > newRounds[i - 1].count) {
+            newRounds[i] = { ...newRounds[i], count: newRounds[i - 1].count };
+        }
+    }
+
+    onTournamentRoundsChange(newRounds);
+  }
+
+  // Handle Classic Count Change - auto adjust batch size if needed
+  const handleClassicCountChange = (newCount: number) => {
+    // Constraint: Cannot exceed total participants
+    const validatedCount = Math.min(newCount, participantCount);
+    
+    onClassicCountChange(validatedCount)
+    // If batch size is larger than total count, reduce it
+    if (batchSize > validatedCount) {
+        onBatchSizeChange(validatedCount)
+    }
+  }
+  
+  // Handle Method Change - auto set default batch size
+  const handleMethodChange = (method: "all" | "one-by-one" | "batch") => {
+      onClassicMethodChange(method)
+      if (method === "batch") {
+          // Default batch size to half of total (rounded up), but at least 1
+          const defaultBatch = Math.ceil(classicCount / 2) || 1
+          onBatchSizeChange(defaultBatch)
+      }
   }
 
   const getTournamentSummary = () => {
@@ -95,9 +153,6 @@ export function DrawConfigView({
             <p className="text-sm text-foreground-secondary mt-0.5">参与者 ({participantCount}) · 配置抽奖规则</p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={onSoundToggle} className="h-10 w-10 rounded-full hover:bg-background-elevated">
-          {soundEnabled ? <Volume2 className="h-5 w-5 text-primary" /> : <VolumeX className="h-5 w-5 text-foreground-tertiary" />}
-        </Button>
       </header>
 
       {/* Content */}
@@ -106,12 +161,14 @@ export function DrawConfigView({
           {/* Mode Selection */}
           <div className="grid gap-4 md:grid-cols-2">
             <button
-              onClick={() => onModeChange("classic")}
+              onClick={() => !isDrawing && onModeChange("classic")}
+              disabled={isDrawing}
               className={cn(
-                "group relative flex items-start gap-4 rounded-2xl border-2 p-6 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-lg",
+                "group relative flex items-start gap-4 rounded-2xl border-2 p-6 text-left transition-all duration-200",
                 mode === "classic" 
                   ? "border-primary bg-primary/5 shadow-md" 
                   : "border-border-subtle bg-background-elevated hover:border-primary/50",
+                isDrawing && "opacity-50 cursor-not-allowed hover:border-border-subtle hover:-translate-y-0 hover:shadow-none"
               )}
             >
               <div
@@ -129,12 +186,14 @@ export function DrawConfigView({
             </button>
 
             <button
-              onClick={() => onModeChange("tournament")}
+              onClick={() => !isDrawing && onModeChange("tournament")}
+              disabled={isDrawing}
               className={cn(
-                "group relative flex items-start gap-4 rounded-2xl border-2 p-6 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-lg",
+                "group relative flex items-start gap-4 rounded-2xl border-2 p-6 text-left transition-all duration-200",
                 mode === "tournament" 
                   ? "border-primary bg-primary/5 shadow-md" 
                   : "border-border-subtle bg-background-elevated hover:border-primary/50",
+                isDrawing && "opacity-50 cursor-not-allowed hover:border-border-subtle hover:-translate-y-0 hover:shadow-none"
               )}
             >
               <div
@@ -180,7 +239,7 @@ export function DrawConfigView({
                     min="1"
                     max={participantCount}
                     value={classicCount}
-                    onChange={(e) => onClassicCountChange(Math.max(1, Number.parseInt(e.target.value) || 1))}
+                    onChange={(e) => handleClassicCountChange(Math.max(1, Number.parseInt(e.target.value) || 1))}
                     className="w-32 text-center h-12 text-xl font-bold bg-background"
                   />
                   <div className="flex flex-col">
@@ -195,56 +254,68 @@ export function DrawConfigView({
                 <div className="flex items-center gap-2">
                   <Label className="text-base font-semibold">抽取方式</Label>
                 </div>
-                <RadioGroup value={classicMethod} onValueChange={(v) => onClassicMethodChange(v as any)}>
+                <RadioGroup value={classicMethod} onValueChange={(v) => handleMethodChange(v as any)}>
                   <div className="grid gap-3">
-                    <div className={cn(
-                        "flex items-start gap-4 rounded-xl border p-4 transition-all cursor-pointer",
-                        classicMethod === "one-by-one" ? "border-primary bg-primary/5" : "border-border-subtle bg-background/50 hover:bg-background"
-                    )}>
+                    <div 
+                        className={cn(
+                            "flex items-start gap-4 rounded-xl border p-4 transition-all cursor-pointer",
+                            classicMethod === "one-by-one" ? "border-primary bg-primary/5" : "border-border-subtle bg-background-elevated hover:bg-background"
+                        )}
+                        onClick={() => handleMethodChange("one-by-one")}
+                    >
                       <RadioGroupItem value="one-by-one" id="method-one" className="mt-1" />
                       <div className="flex-1">
-                        <Label htmlFor="method-one" className="cursor-pointer font-bold flex items-center gap-2 text-base">
+                        <Label htmlFor="method-one" className="cursor-pointer font-bold flex items-center gap-2 text-base pointer-events-none">
                           逐个抽取
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary text-primary-foreground">推荐</span>
                         </Label>
-                        <p className="text-sm text-foreground-secondary mt-1">每次点击抽取 1 人，仪式感最强，需点击 {classicCount} 次</p>
+                        <p className="text-sm text-foreground-secondary mt-1 pointer-events-none">每次点击抽取 1 人，仪式感最强，需点击 {classicCount} 次</p>
                       </div>
                     </div>
 
-                    <div className={cn(
-                        "flex items-start gap-4 rounded-xl border p-4 transition-all cursor-pointer",
-                        classicMethod === "all" ? "border-primary bg-primary/5" : "border-border-subtle bg-background/50 hover:bg-background"
-                    )}>
+                    <div 
+                        className={cn(
+                            "flex items-start gap-4 rounded-xl border p-4 transition-all cursor-pointer",
+                            classicMethod === "all" ? "border-primary bg-primary/5" : "border-border-subtle bg-background-elevated hover:bg-background"
+                        )}
+                        onClick={() => handleMethodChange("all")}
+                    >
                       <RadioGroupItem value="all" id="method-all" className="mt-1" />
                       <div className="flex-1">
-                        <Label htmlFor="method-all" className="cursor-pointer font-bold text-base">
+                        <Label htmlFor="method-all" className="cursor-pointer font-bold text-base pointer-events-none">
                           一次性全部抽出
                         </Label>
-                        <p className="text-sm text-foreground-secondary mt-1">直接展示所有 {classicCount} 位中奖者，效率最高</p>
+                        <p className="text-sm text-foreground-secondary mt-1 pointer-events-none">直接展示所有 {classicCount} 位中奖者，效率最高</p>
                       </div>
                     </div>
 
-                    <div className={cn(
-                        "flex items-start gap-4 rounded-xl border p-4 transition-all cursor-pointer",
-                        classicMethod === "batch" ? "border-primary bg-primary/5" : "border-border-subtle bg-background/50 hover:bg-background"
-                    )}>
+                    <div 
+                        className={cn(
+                            "flex items-start gap-4 rounded-xl border p-4 transition-all cursor-pointer",
+                            classicMethod === "batch" ? "border-primary bg-primary/5" : "border-border-subtle bg-background-elevated hover:bg-background"
+                        )}
+                        onClick={() => handleMethodChange("batch")}
+                    >
                       <RadioGroupItem value="batch" id="method-batch" className="mt-1" />
                       <div className="flex-1 space-y-3">
                         <div>
-                          <Label htmlFor="method-batch" className="cursor-pointer font-bold text-base">
+                          <Label htmlFor="method-batch" className="cursor-pointer font-bold text-base pointer-events-none">
                             分批抽取
                           </Label>
-                          <p className="text-sm text-foreground-secondary mt-1">按组进行抽取，平衡速度与仪式感</p>
+                          <p className="text-sm text-foreground-secondary mt-1 pointer-events-none">按组进行抽取，平衡速度与仪式感</p>
                         </div>
                         {classicMethod === "batch" && (
-                          <div className="flex items-center gap-3 pl-1 animate-in slide-in-from-top-2">
+                          <div className="flex items-center gap-3 pl-1 animate-in slide-in-from-top-2" onClick={(e) => e.stopPropagation()}>
                             <span className="text-sm">每批抽取</span>
                             <Input
                               type="number"
                               min="1"
                               max={classicCount}
                               value={batchSize}
-                              onChange={(e) => onBatchSizeChange(Math.max(1, Number.parseInt(e.target.value) || 1))}
+                              onChange={(e) => {
+                                  const val = Math.max(1, Number.parseInt(e.target.value) || 1)
+                                  onBatchSizeChange(Math.min(val, classicCount)) // Limit to classicCount
+                              }}
                               className="w-24 text-center h-9 bg-background"
                             />
                             <span className="text-sm text-foreground-secondary">人</span>
@@ -371,6 +442,22 @@ export function DrawConfigView({
 
       {/* Footer Action */}
       <div className="flex items-center justify-end gap-3 border-t border-border-subtle bg-background-elevated/80 px-8 py-6 backdrop-blur-sm">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="gap-2 px-6 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20" 
+              onClick={onResetConfig}
+            >
+              <RotateCcw className="h-4 w-4" />
+              重置配置
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>重置所有配置</p>
+          </TooltipContent>
+        </Tooltip>
         <Button size="lg" className="gap-2 px-8 text-lg shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all" onClick={onGoToDraw}>
           <Target className="h-5 w-5" />
           开始抽奖

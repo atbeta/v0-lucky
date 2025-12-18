@@ -37,32 +37,32 @@ export function WindowTitlebar({ title = "抽奖助手" }: WindowTitlebarProps) 
   }
 
   return (
-    <div data-tauri-drag-region className="flex h-8 items-center justify-between border-b border-border-subtle bg-background-elevated px-3 select-none z-50">
+    <div data-tauri-drag-region className="flex h-10 items-center justify-between border-b border-border-subtle bg-background-elevated/50 backdrop-blur-md px-4 select-none z-50 transition-colors duration-300">
       {/* App Title & Icon */}
-      <div data-tauri-drag-region className="flex items-center gap-2 text-xs text-foreground-secondary pointer-events-none">
-        <div className="flex h-4 w-4 items-center justify-center">
-          <svg className="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
+      <div data-tauri-drag-region className="flex items-center gap-3 text-xs text-foreground-secondary pointer-events-none">
+        <div className="flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br from-primary-light to-primary-dark shadow-sm">
+          <svg className="h-3 w-3 fill-white" viewBox="0 0 1024 1024">
+             <path d="M512 0C452 362 362 452 0 512C362 572 452 662 512 1024C572 662 662 572 1024 512C662 452 572 362 512 0Z" />
           </svg>
         </div>
-        <span className="font-medium">{title}</span>
+        <span className="font-semibold tracking-wide text-foreground/80">{title}</span>
       </div>
 
       {/* Window Controls */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <Button
           variant="ghost"
           size="icon"
           onClick={handleMinimize}
-          className="h-6 w-8 rounded-md hover:bg-background-overlay text-foreground-secondary hover:text-foreground"
+          className="h-7 w-9 rounded-lg hover:bg-accent text-foreground-secondary hover:text-foreground transition-colors"
         >
-          <Minus className="h-3 w-3" />
+          <Minus className="h-3.5 w-3.5" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
           onClick={handleMaximize}
-          className="h-6 w-8 rounded-md hover:bg-background-overlay text-foreground-secondary hover:text-foreground"
+          className="h-7 w-9 rounded-lg hover:bg-accent text-foreground-secondary hover:text-foreground transition-colors"
         >
           <Square className="h-3 w-3" />
         </Button>
@@ -70,9 +70,9 @@ export function WindowTitlebar({ title = "抽奖助手" }: WindowTitlebarProps) 
           variant="ghost"
           size="icon"
           onClick={handleClose}
-          className="h-6 w-8 rounded-md hover:bg-destructive hover:text-white text-foreground-secondary"
+          className="h-7 w-9 rounded-lg hover:bg-destructive hover:text-white text-foreground-secondary transition-colors"
         >
-          <X className="h-3 w-3" />
+          <X className="h-3.5 w-3.5" />
         </Button>
       </div>
     </div>

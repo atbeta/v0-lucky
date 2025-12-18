@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Sidebar } from "@/components/sidebar"
 import { Stage } from "@/components/stage"
 import { Inspector } from "@/components/inspector"
 import { ControlBar } from "@/components/control-bar"
 import { TopBar } from "@/components/top-bar"
 import { WindowTitlebar } from "@/components/window-titlebar"
+import { isTauri, invoke } from "@tauri-apps/api/core"
 
 interface HistoryRecord {
   id: number
@@ -16,6 +17,7 @@ interface HistoryRecord {
   winners: string[]
   totalParticipants: number
   rounds?: { name: string; winners: string[] }[]
+  participantsSnapshot?: { id: number; name: string; weight: number; excluded: boolean }[]
 }
 
 export default function HomePage() {
@@ -35,7 +37,7 @@ export default function HomePage() {
   const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([])
 
   // Settings State
-  const [hideNamesWhileRolling, setHideNamesWhileRolling] = useState(false)
+  const [hideNamesWhileRolling, setHideNamesWhileRolling] = useState(true)
   const [particleEffects, setParticleEffects] = useState(true)
   // Track which winners have already been celebrated with confetti to prevent duplicates on view switch
   const [lastCelebratedWinners, setLastCelebratedWinners] = useState<string>("")
@@ -55,14 +57,181 @@ export default function HomePage() {
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0)
   const [roundWinners, setRoundWinners] = useState<string[][]>([]) // Store winners of each round
 
-  const [participants, setParticipants] = useState([
-    { id: 1, name: "张三", weight: 1, excluded: false },
-    { id: 2, name: "李四", weight: 1, excluded: false },
-    { id: 3, name: "王五", weight: 2, excluded: false },
-    { id: 4, name: "赵六", weight: 1, excluded: false },
-    { id: 5, name: "孙七", weight: 1, excluded: false },
-    { id: 6, name: "周八", weight: 1, excluded: false },
-    { id: 7, name: "吴九", weight: 1, excluded: false },
+  const [participants, setParticipants] = useState<any[]>([])
+
+  // Persistence Logic
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  // Initialize Config & Data
+  useEffect(() => {
+    const initializeApp = async () => {
+      if (isTauri()) {
+        try {
+          const { readTextFile, exists, writeTextFile } = await import('@tauri-apps/plugin-fs');
+          const { join } = await import('@tauri-apps/api/path');
+          
+          // Get App Directory (Current Working Directory)
+          const appDir = await invoke('get_app_dir') as string;
+          const configPath = await join(appDir, 'config.json');
+          const participantsPath = await join(appDir, 'participants.json');
+          const historyPath = await join(appDir, 'history.json');
+          
+          // Load Config
+          const configExists = await exists(configPath);
+          if (configExists) {
+            const configContent = await readTextFile(configPath);
+            const parsedConfig = JSON.parse(configContent);
+            if (parsedConfig.soundEnabled !== undefined) setSoundEnabled(parsedConfig.soundEnabled);
+            if (parsedConfig.autoExclude !== undefined) setAutoExclude(parsedConfig.autoExclude);
+            if (parsedConfig.hideNamesWhileRolling !== undefined) setHideNamesWhileRolling(parsedConfig.hideNamesWhileRolling);
+            if (parsedConfig.particleEffects !== undefined) setParticleEffects(parsedConfig.particleEffects);
+            
+            // Restore Draw Config
+            if (parsedConfig.mode) setMode(parsedConfig.mode);
+            if (parsedConfig.classicCount) setClassicCount(parsedConfig.classicCount);
+            if (parsedConfig.classicMethod) setClassicMethod(parsedConfig.classicMethod);
+            if (parsedConfig.batchSize) setBatchSize(parsedConfig.batchSize);
+            if (parsedConfig.prizeName) setPrizeName(parsedConfig.prizeName);
+            if (parsedConfig.tournamentRounds) setTournamentRounds(parsedConfig.tournamentRounds);
+          }
+
+          // Load Participants
+          const dataExists = await exists(participantsPath);
+          if (dataExists) {
+            const dataContent = await readTextFile(participantsPath);
+            const parsedData = JSON.parse(dataContent);
+            if (Array.isArray(parsedData) && parsedData.length > 0) {
+              setParticipants(parsedData);
+            }
+          }
+
+          // Load History
+          const historyExists = await exists(historyPath);
+          if (historyExists) {
+            const historyContent = await readTextFile(historyPath);
+            const parsedHistory = JSON.parse(historyContent);
+            if (Array.isArray(parsedHistory) && parsedHistory.length > 0) {
+              setHistoryRecords(parsedHistory);
+            }
+          }
+        } catch (e) {
+          console.error("Failed to load data from file system", e);
+        }
+      } else {
+        // Fallback to LocalStorage
+        const stored = localStorage.getItem("lucky-draw-participants")
+        const storedConfig = localStorage.getItem("lucky-draw-config")
+        const storedHistory = localStorage.getItem("lucky-draw-history")
+        
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored)
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                setParticipants(parsed)
+            }
+          } catch (e) {
+            console.error("Failed to load participants from LS", e)
+          }
+        }
+
+        if (storedHistory) {
+          try {
+            const parsedHistory = JSON.parse(storedHistory)
+            if (Array.isArray(parsedHistory) && parsedHistory.length > 0) {
+                setHistoryRecords(parsedHistory)
+            }
+          } catch (e) {
+            console.error("Failed to load history from LS", e)
+          }
+        }
+
+        if (storedConfig) {
+          try {
+            const parsedConfig = JSON.parse(storedConfig)
+            if (parsedConfig.soundEnabled !== undefined) setSoundEnabled(parsedConfig.soundEnabled)
+            if (parsedConfig.autoExclude !== undefined) setAutoExclude(parsedConfig.autoExclude)
+            if (parsedConfig.hideNamesWhileRolling !== undefined) setHideNamesWhileRolling(parsedConfig.hideNamesWhileRolling)
+            if (parsedConfig.particleEffects !== undefined) setParticleEffects(parsedConfig.particleEffects)
+            
+            // Restore Draw Config
+            if (parsedConfig.mode) setMode(parsedConfig.mode)
+            if (parsedConfig.classicCount) setClassicCount(parsedConfig.classicCount)
+            if (parsedConfig.classicMethod) setClassicMethod(parsedConfig.classicMethod)
+            if (parsedConfig.batchSize) setBatchSize(parsedConfig.batchSize)
+            if (parsedConfig.prizeName) setPrizeName(parsedConfig.prizeName)
+            if (parsedConfig.tournamentRounds) setTournamentRounds(parsedConfig.tournamentRounds)
+          } catch (e) {
+            console.error("Failed to load config from LS", e)
+          }
+        }
+      }
+      setIsLoaded(true)
+    };
+
+    initializeApp();
+  }, [])
+
+  // Save Config & Data
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const saveData = async () => {
+      const config = {
+        soundEnabled,
+        autoExclude,
+        hideNamesWhileRolling,
+        particleEffects,
+        // Draw Config
+        mode,
+        classicCount,
+        classicMethod,
+        batchSize,
+        prizeName,
+        tournamentRounds
+      };
+
+      if (isTauri()) {
+        try {
+          const { writeTextFile } = await import('@tauri-apps/plugin-fs');
+          const { join } = await import('@tauri-apps/api/path');
+          
+          // Get App Directory (Current Working Directory)
+          const appDir = await invoke('get_app_dir') as string;
+          const configPath = await join(appDir, 'config.json');
+          const participantsPath = await join(appDir, 'participants.json');
+          const historyPath = await join(appDir, 'history.json');
+
+          // Write files
+          await writeTextFile(configPath, JSON.stringify(config, null, 2));
+          await writeTextFile(participantsPath, JSON.stringify(participants, null, 2));
+          await writeTextFile(historyPath, JSON.stringify(historyRecords, null, 2));
+        } catch (e) {
+          console.error("Failed to save data to file system", e);
+        }
+      } else {
+        // Fallback to LocalStorage
+        localStorage.setItem("lucky-draw-participants", JSON.stringify(participants));
+        localStorage.setItem("lucky-draw-config", JSON.stringify(config));
+        localStorage.setItem("lucky-draw-history", JSON.stringify(historyRecords));
+      }
+    };
+
+    saveData();
+  }, [
+    participants,
+    historyRecords,
+    soundEnabled, 
+    autoExclude, 
+    hideNamesWhileRolling, 
+    particleEffects, 
+    isLoaded,
+    // Add Draw Config dependencies
+    mode,
+    classicCount,
+    classicMethod,
+    batchSize,
+    prizeName,
+    tournamentRounds
   ])
 
   const [classicWinners, setClassicWinners] = useState<string[]>([]) // Track all winners in classic mode
@@ -197,7 +366,8 @@ export default function HomePage() {
                  mode: "classic",
                  prizeName: prizeName || "未命名奖品",
                  winners: newClassicWinners,
-                 totalParticipants: participants.length
+                 totalParticipants: participants.length,
+                 participantsSnapshot: participants // Store snapshot of current participants
              }
              setHistoryRecords([newRecord, ...historyRecords])
          }
@@ -232,7 +402,8 @@ export default function HomePage() {
                  rounds: tournamentRounds.map((r, idx) => ({
                      name: r.name,
                      winners: newRoundWinners[idx] || []
-                 }))
+                 })),
+                 participantsSnapshot: participants // Store snapshot of current participants
              }
              setHistoryRecords([newRecord, ...historyRecords])
          }
@@ -259,6 +430,77 @@ export default function HomePage() {
 
   const currentRoundFinished = mode === "tournament" && 
       (roundWinners[currentRoundIndex]?.length || 0) >= tournamentRounds[currentRoundIndex].count
+
+  const showNextRound = mode === "tournament" && 
+      currentRoundFinished &&
+      currentRoundIndex < tournamentRounds.length - 1
+
+  const isFinalRound = mode === "tournament" && currentRoundIndex === tournamentRounds.length - 1
+  const isClassicFinished = mode === "classic" && classicWinners.length >= classicCount
+
+  // Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        // Ignore if typing in an input
+        if (
+             document.activeElement?.tagName === "INPUT" || 
+             document.activeElement?.tagName === "TEXTAREA" ||
+             (document.activeElement as HTMLElement)?.isContentEditable
+        ) {
+            return
+        }
+
+        e.preventDefault()
+
+        if (currentView !== "draw") return
+
+        if (isDrawing) {
+          handleStopDraw()
+        } else {
+            // Logic to determine "Start" or "Next"
+            if (showNextRound) {
+                handleNextRound()
+            } else if ((isFinalRound && currentRoundFinished) || isClassicFinished) {
+                // Finished, do nothing
+            } else {
+                handleStartDraw()
+            }
+        }
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [
+    currentView, 
+    isDrawing, 
+    showNextRound, 
+    isFinalRound, 
+    currentRoundFinished, 
+    isClassicFinished,
+    handleStopDraw, // Dependencies that might change
+    handleStartDraw,
+    handleNextRound
+  ])
+
+  const handleResetConfig = () => {
+    // Only Reset Draw Config, keep Settings (sound, effects, etc.) as is
+    setMode("classic")
+    setClassicCount(1)
+    setClassicMethod("one-by-one")
+    setBatchSize(2)
+    setPrizeName("")
+    setTournamentRounds([
+      { id: 1, count: 5, name: "第一轮" },
+      { id: 2, count: 3, name: "第二轮" },
+      { id: 3, count: 1, name: "最终轮" },
+    ])
+  }
+
+  const handleClearHistory = () => {
+     setHistoryRecords([])
+  }
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
@@ -333,6 +575,8 @@ export default function HomePage() {
                   onParticleEffectsChange={setParticleEffects}
                   lastCelebratedWinners={lastCelebratedWinners}
                   onCelebrationComplete={setLastCelebratedWinners}
+                  onResetConfig={handleResetConfig}
+                  onClearHistory={handleClearHistory}
                 />
 
                 {/* Control Bar */}
@@ -350,13 +594,11 @@ export default function HomePage() {
                       setLastCelebratedWinners("")
                     }}
                     winners={winners}
-                    showNextRound={mode === "tournament" && 
-                       currentRoundFinished &&
-                       currentRoundIndex < tournamentRounds.length - 1}
+                    showNextRound={showNextRound}
                     onNextRound={handleNextRound}
-                    isFinalRound={mode === "tournament" && currentRoundIndex === tournamentRounds.length - 1}
+                    isFinalRound={isFinalRound}
                     isRoundFinished={currentRoundFinished}
-                    isClassicFinished={mode === "classic" && classicWinners.length >= classicCount}
+                    isClassicFinished={isClassicFinished}
                   />
                 )}
             </div>
@@ -367,6 +609,7 @@ export default function HomePage() {
                 mode={mode} 
                 participants={participants} 
                 onModeChange={setMode} 
+                isDrawing={isDrawing}
                 classicCount={classicCount}
                 classicMethod={classicMethod}
                 batchSize={batchSize}

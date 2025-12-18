@@ -34,7 +34,6 @@ export function Sidebar({ collapsed, onToggle, currentView, onViewChange }: Side
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-light to-primary-dark shadow-lg shadow-primary/20">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
-            <span className="font-bold text-lg gradient-text">Lucky</span>
           </div>
         )}
         <Button
@@ -80,12 +79,12 @@ export function Sidebar({ collapsed, onToggle, currentView, onViewChange }: Side
       </nav>
 
       {/* Footer */}
-      <div className="p-4 mt-auto">
+      <div className="p-4 mt-auto mb-4">
         {!collapsed ? (
           <div className="rounded-xl bg-background-overlay/50 p-4 border border-border-subtle/50">
             <div className="text-xs text-foreground-secondary">
               <div className="font-semibold text-foreground mb-1">v2.0.0</div>
-              <div>Tauri + React</div>
+              <div>祝君好运</div>
             </div>
           </div>
         ) : (

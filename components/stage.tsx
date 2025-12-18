@@ -77,6 +77,8 @@ interface StageProps {
   // Confetti State Lifting
   lastCelebratedWinners?: string
   onCelebrationComplete?: (winnersKey: string) => void
+  onResetConfig?: () => void
+  onClearHistory?: () => void
 }
 
 export function Stage({
@@ -113,6 +115,8 @@ export function Stage({
   onParticleEffectsChange = () => {},
   lastCelebratedWinners = "",
   onCelebrationComplete = () => {},
+  onResetConfig = () => {},
+  onClearHistory = () => {},
 }: StageProps) {
   return (
     <div className="flex-1 overflow-hidden bg-stage relative">
@@ -129,6 +133,9 @@ export function Stage({
           prizeName={prizeName}
           hideNamesWhileRolling={hideNamesWhileRolling}
           particleEffects={particleEffects}
+          soundEnabled={soundEnabled}
+          onSoundToggle={onSoundToggle}
+          onHideNamesToggle={() => onHideNamesWhileRollingChange(!hideNamesWhileRolling)}
           lastCelebratedWinners={lastCelebratedWinners}
           onCelebrationComplete={onCelebrationComplete}
         />
@@ -156,9 +163,11 @@ export function Stage({
           onTournamentRoundsChange={onTournamentRoundsChange}
           prizeName={prizeName}
           onPrizeNameChange={onPrizeNameChange}
+          isDrawing={isDrawing} // Pass isDrawing prop
+          onResetConfig={onResetConfig}
         />
       )}
-      {currentView === "history" && <HistoryView records={historyRecords} />}
+      {currentView === "history" && <HistoryView records={historyRecords} onClearHistory={onClearHistory} />}
       {currentView === "settings" && (
         <SettingsView 
            hideNamesWhileRolling={hideNamesWhileRolling}
@@ -167,6 +176,8 @@ export function Stage({
            onParticleEffectsChange={onParticleEffectsChange}
            soundEnabled={soundEnabled}
            onSoundEnabledChange={(val) => onSoundToggle()} 
+           autoExclude={autoExclude}
+           onAutoExcludeChange={onAutoExcludeChange}
         />
       )}
     </div>

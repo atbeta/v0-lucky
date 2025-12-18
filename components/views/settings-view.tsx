@@ -4,7 +4,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { SettingsIcon, Volume2, Sparkles, EyeOff, Moon, Sun, Monitor, Palette } from "lucide-react"
+import { SettingsIcon, Volume2, Sparkles, EyeOff, Moon, Sun, Monitor, Palette, Trash2 } from "lucide-react"
 import { useTheme } from "next-themes"
 
 interface SettingsViewProps {
@@ -14,6 +14,8 @@ interface SettingsViewProps {
   onParticleEffectsChange: (checked: boolean) => void
   soundEnabled: boolean
   onSoundEnabledChange: (checked: boolean) => void
+  autoExclude: boolean
+  onAutoExcludeChange: (checked: boolean) => void
 }
 
 export function SettingsView({
@@ -23,6 +25,8 @@ export function SettingsView({
   onParticleEffectsChange,
   soundEnabled,
   onSoundEnabledChange,
+  autoExclude,
+  onAutoExcludeChange,
 }: SettingsViewProps) {
   const { theme, setTheme } = useTheme()
 
@@ -136,12 +140,27 @@ export function SettingsView({
                   </div>
                   <div className="space-y-0.5">
                     <Label htmlFor="sound-effects" className="text-base font-medium cursor-pointer">
-                      音效
+                      默认开启音效
                     </Label>
-                    <p className="text-xs text-foreground-secondary">播放抽奖和中奖音效</p>
+                    <p className="text-xs text-foreground-secondary">应用启动时是否默认开启音效</p>
                   </div>
                 </div>
                 <Switch id="sound-effects" checked={soundEnabled} onCheckedChange={onSoundEnabledChange} />
+              </div>
+
+              <div className="flex items-center justify-between rounded-xl border border-border-subtle bg-background/50 p-4 hover:bg-background transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-full bg-background-overlay flex items-center justify-center">
+                    <Trash2 className="h-5 w-5 text-foreground-secondary" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <Label htmlFor="auto-exclude" className="text-base font-medium cursor-pointer">
+                      默认自动排除
+                    </Label>
+                    <p className="text-xs text-foreground-secondary">应用启动时是否默认开启中奖后自动排除</p>
+                  </div>
+                </div>
+                <Switch id="auto-exclude" checked={autoExclude} onCheckedChange={onAutoExcludeChange} />
               </div>
             </div>
           </div>

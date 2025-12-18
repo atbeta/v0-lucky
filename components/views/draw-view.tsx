@@ -2,7 +2,10 @@
 
 import { useEffect, useState, useRef } from "react"
 import { cn } from "@/lib/utils"
-import { Sparkles } from "lucide-react"
+import { Sparkles, Volume2, VolumeX, Eye, EyeOff } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { isTauri, invoke, convertFileSrc } from "@tauri-apps/api/core"
 
 interface Participant {
   id: number
@@ -28,6 +31,9 @@ interface DrawViewProps {
   // Settings
   hideNamesWhileRolling?: boolean
   particleEffects?: boolean
+  soundEnabled?: boolean
+  onSoundToggle?: () => void
+  onHideNamesToggle?: () => void
   prizeName?: string
   lastCelebratedWinners?: string
   onCelebrationComplete?: (winnersKey: string) => void
@@ -47,12 +53,46 @@ export function DrawView({
   prizeName, 
   hideNamesWhileRolling, 
   particleEffects,
+  soundEnabled,
+  onSoundToggle,
+  onHideNamesToggle,
   lastCelebratedWinners = "",
   onCelebrationComplete = () => {}
 }: DrawViewProps) {
   const [rollingNames, setRollingNames] = useState<string[]>([])
-  
-  // Confetti effect
+  const bgmRef = useRef<HTMLAudioElement | null>(null)
+  const winnerSoundRef = useRef<HTMLAudioElement | null>(null)
+
+  // Helper for dynamic item sizing based on total count
+  const getItemSizeClass = (count: number) => {
+    if (count > 20) return "h-8 w-20 text-xs"
+    if (count > 10) return "h-9 w-24 text-xs"
+    return "h-9 w-32 text-sm"
+  }
+
+  // Initialize Audio
+  useEffect(() => {
+    bgmRef.current = new Audio('/bgm.mp3')
+    bgmRef.current.loop = true
+    winnerSoundRef.current = new Audio('/winner.mp3')
+    
+    return () => {
+      bgmRef.current?.pause()
+      winnerSoundRef.current?.pause()
+    }
+  }, [])
+
+  // Handle BGM
+  useEffect(() => {
+    if (soundEnabled && isDrawing) {
+      bgmRef.current?.play().catch(e => console.error("Audio play failed", e))
+    } else {
+      bgmRef.current?.pause()
+      if (bgmRef.current) bgmRef.current.currentTime = 0
+    }
+  }, [isDrawing, soundEnabled])
+
+  // Handle Winner Sound (Reuse logic from Confetti)
   useEffect(() => {
     // Check if we have winners, effects are enabled, AND we haven't shown for this specific set of winners yet
     // Compare against the prop passed from parent (persisted state)
@@ -72,35 +112,42 @@ export function DrawView({
         }
     }
 
-    if (winners.length > 0 && particleEffects && lastCelebratedWinners !== winnersKey && shouldCelebrate) {
+    if (winners.length > 0 && lastCelebratedWinners !== winnersKey && shouldCelebrate) {
         // Notify parent immediately
         onCelebrationComplete(winnersKey)
         
-        import("canvas-confetti").then((confetti) => {
-             const duration = 3000;
-             const animationEnd = Date.now() + duration;
-             const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+        // Play Sound if enabled
+        if (soundEnabled) {
+            winnerSoundRef.current?.play().catch(e => console.error("Winner sound failed", e))
+        }
 
-             const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
-
-             const interval: any = setInterval(function() {
-                 const timeLeft = animationEnd - Date.now();
-
-                 if (timeLeft <= 0) {
-                     return clearInterval(interval);
-                 }
-
-                 const particleCount = 50 * (timeLeft / duration);
-                 // since particles fall down, start a bit higher than random
-                 confetti.default({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
-                 confetti.default({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
-             }, 250);
-        }).catch(err => console.error("Confetti failed", err));
+        if (particleEffects) {
+            import("canvas-confetti").then((confetti) => {
+                 const duration = 3000;
+                 const animationEnd = Date.now() + duration;
+                 const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+    
+                 const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+    
+                 const interval: any = setInterval(function() {
+                     const timeLeft = animationEnd - Date.now();
+    
+                     if (timeLeft <= 0) {
+                         return clearInterval(interval);
+                     }
+    
+                     const particleCount = 50 * (timeLeft / duration);
+                     // since particles fall down, start a bit higher than random
+                     confetti.default({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+                     confetti.default({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+                 }, 250);
+            }).catch(err => console.error("Confetti failed", err));
+        }
     } else if (winners.length === 0 && lastCelebratedWinners !== "") {
         // Reset if winners are cleared (new game started) - though parent handles this usually on reset
         onCelebrationComplete("")
     }
-  }, [winners, particleEffects, lastCelebratedWinners, onCelebrationComplete]);
+  }, [winners, particleEffects, soundEnabled, lastCelebratedWinners, onCelebrationComplete]);
 
   useEffect(() => {
     if (isDrawing) {
@@ -112,18 +159,76 @@ export function DrawView({
            
            for(let i=0; i<count; i++) {
                const randomIndex = Math.floor(Math.random() * availableParticipants.length)
-               currentRolling.push(availableParticipants[randomIndex].name)
+               const realName = availableParticipants[randomIndex].name
+               
+               if (hideNamesWhileRolling) {
+                   const firstChar = realName.slice(0, 1)
+                   // Use '█' (Full Block) character to simulate blocking
+                   // Add spaces to create gaps between blocks if needed, or just use blocks
+                   const restLength = Math.max(2, realName.length - 1)
+                   let mask = ""
+                   for(let j=0; j<restLength; j++) {
+                       // Use hair space (U+200A) or thin space (U+2009) for tighter gap
+                       mask += "█\u200A" 
+                   }
+                   // Trim the last space
+                   mask = mask.trimEnd()
+                   
+                   // Use a smaller space after first char too
+                   currentRolling.push(firstChar + "\u200A" + mask)
+               } else {
+                   currentRolling.push(realName)
+               }
            }
            setRollingNames(currentRolling)
         }
       }, 50)
       return () => clearInterval(interval)
     }
-  }, [isDrawing, participants, winnerCount])
+  }, [isDrawing, participants, winnerCount, hideNamesWhileRolling])
 
   return (
-    <div className="flex h-full flex-col items-center justify-center p-8 bg-background">
-      <div className="text-center w-full max-w-5xl">
+    <div className="flex h-full flex-col items-center justify-start pt-24 p-8 bg-background relative">
+      {/* Sound Toggle Button - Fixed to top-left of the view container */}
+      {onSoundToggle && (
+        <div className="absolute top-8 left-8 z-20 flex items-center gap-3">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={onSoundToggle} 
+                className="h-10 w-10 rounded-full bg-background-elevated/80 backdrop-blur-md border border-border-subtle shadow-sm hover:bg-background-overlay text-foreground-secondary hover:text-foreground transition-colors"
+              >
+                {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5 text-foreground-tertiary" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>临时开启/关闭音效</p>
+            </TooltipContent>
+          </Tooltip>
+
+          {onHideNamesToggle && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={onHideNamesToggle} 
+                  className="h-10 w-10 rounded-full bg-background-elevated/80 backdrop-blur-md border border-border-subtle shadow-sm hover:bg-background-overlay text-foreground-secondary hover:text-foreground transition-colors"
+                >
+                  {hideNamesWhileRolling ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>{hideNamesWhileRolling ? "显示滚动名字" : "隐藏滚动名字"}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      )}
+
+      <div className="text-center w-full max-w-5xl relative">
         {/* Main Display */}
         <div className="relative w-full aspect-video flex items-center justify-center">
           {/* Background glow effect */}
@@ -169,7 +274,7 @@ export function DrawView({
               {/* Tournament Info */}
               {mode === "tournament" && roundInfo && (
                 <div className="mt-2 flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary border border-primary/20">
-                   <span>第 {roundInfo.current} / {roundInfo.total} 轮：{roundInfo.name}</span>
+                   <span>第 {roundInfo.current} / {roundInfo.total} 轮</span>
                 </div>
               )}
 
@@ -186,7 +291,7 @@ export function DrawView({
                               winnerCount > 1 
                                 ? "text-5xl bg-background/30 px-8 py-4 rounded-2xl border border-white/10 shadow-inner backdrop-blur-sm" 
                                 : "text-8xl gradient-text drop-shadow-2xl",
-                              hideNamesWhileRolling && "blur-sm select-none"
+                              hideNamesWhileRolling && "text-primary/60 font-mono tracking-tighter"
                          )}>
                              {name}
                          </div>
@@ -216,7 +321,7 @@ export function DrawView({
           </div>
           
           {/* Progress Indicators Below Stage */}
-          <div className="absolute -bottom-24 left-0 right-0">
+          <div className="absolute top-full mt-8 left-0 right-0 max-h-[120px] overflow-y-auto custom-scrollbar px-4">
              {/* Tournament Round Progress */}
              {mode === "tournament" && roundInfo && (
                 <div className="w-full">
@@ -227,22 +332,38 @@ export function DrawView({
                     {roundInfo.winnersSoFar.length > 0 ? (
                         <div className="flex flex-wrap justify-center gap-2 max-w-3xl mx-auto">
                             {roundInfo.winnersSoFar.map((winner, idx) => (
-                                <div key={idx} className="animate-in fade-in zoom-in duration-300 flex items-center gap-2 rounded-full border border-primary/20 bg-background-elevated px-4 py-1.5 text-sm text-primary shadow-sm">
-                                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold">
-                                        {idx + 1}
-                                    </div>
-                                    {winner}
-                                </div>
+                                <Tooltip key={idx}>
+                                    <TooltipTrigger asChild>
+                                        <div className={cn(
+                                            "animate-in fade-in zoom-in duration-300 flex items-center gap-2 rounded-full border border-primary/20 bg-background-elevated px-2 text-primary shadow-sm cursor-default",
+                                            getItemSizeClass(roundInfo.targetCount)
+                                        )}>
+                                            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold">
+                                                {idx + 1}
+                                            </div>
+                                            <span className="truncate">{winner}</span>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{winner}</p>
+                                    </TooltipContent>
+                                </Tooltip>
                             ))}
                             {/* Placeholders for remaining slots */}
                             {Array.from({ length: Math.max(0, roundInfo.targetCount - roundInfo.winnersSoFar.length) }).map((_, idx) => (
-                                <div key={`placeholder-${idx}`} className="h-8 w-24 rounded-full border border-dashed border-foreground-tertiary/50 bg-transparent" />
+                                <div key={`placeholder-${idx}`} className={cn(
+                                    "rounded-full border border-dashed border-foreground-tertiary/50 bg-transparent",
+                                    getItemSizeClass(roundInfo.targetCount)
+                                )} />
                             ))}
                         </div>
                     ) : (
-                        <div className="flex justify-center gap-2 opacity-50">
+                        <div className="flex flex-wrap justify-center gap-2 opacity-50 max-w-3xl mx-auto">
                             {Array.from({ length: roundInfo.targetCount }).map((_, idx) => (
-                                <div key={`empty-${idx}`} className="h-8 w-24 rounded-full border border-dashed border-foreground-tertiary bg-transparent" />
+                                <div key={`empty-${idx}`} className={cn(
+                                    "rounded-full border border-dashed border-foreground-tertiary bg-transparent",
+                                    getItemSizeClass(roundInfo.targetCount)
+                                )} />
                             ))}
                         </div>
                     )}
@@ -250,33 +371,57 @@ export function DrawView({
               )}
 
              {/* Classic Batch Progress */}
-             {mode === "classic" && classicTotal && classicTotal > 0 && classicWinnersSoFar && classicWinnersSoFar.length > 0 && (
+             {mode === "classic" && classicTotal && classicTotal > 0 && (
                 <div className="w-full">
                     <div className="flex items-center justify-center gap-2 text-sm font-medium text-foreground-secondary mb-3">
-                       <span>已中奖名单 ({classicWinnersSoFar.length}/{classicTotal})</span>
+                       <span>已中奖名单 ({classicWinnersSoFar?.length || 0}/{classicTotal})</span>
                     </div>
                     
-                    <div className="flex flex-wrap justify-center gap-2 max-w-3xl mx-auto">
-                        {classicWinnersSoFar.map((winner, idx) => (
-                            <div key={idx} className="animate-in fade-in zoom-in duration-300 flex items-center gap-2 rounded-full border border-primary/20 bg-background-elevated px-4 py-1.5 text-sm text-primary shadow-sm">
-                                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold">
-                                    {idx + 1}
-                                </div>
-                                {winner}
-                            </div>
-                        ))}
-                        {/* Placeholders for remaining slots */}
-                        {Array.from({ length: Math.max(0, classicTotal - classicWinnersSoFar.length) }).map((_, idx) => (
-                            <div key={`placeholder-${idx}`} className="h-8 w-24 rounded-full border border-dashed border-border-subtle bg-transparent opacity-30" />
-                        ))}
-                    </div>
+                    {(classicWinnersSoFar && classicWinnersSoFar.length > 0) ? (
+                        <div className="flex flex-wrap justify-center gap-2 max-w-3xl mx-auto">
+                            {classicWinnersSoFar.map((winner, idx) => (
+                                <Tooltip key={idx}>
+                                    <TooltipTrigger asChild>
+                                        <div className={cn(
+                                            "animate-in fade-in zoom-in duration-300 flex items-center gap-2 rounded-full border border-primary/20 bg-background-elevated px-2 text-primary shadow-sm cursor-default",
+                                            getItemSizeClass(classicTotal)
+                                        )}>
+                                            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold">
+                                                {idx + 1}
+                                            </div>
+                                            <span className="truncate">{winner}</span>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{winner}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            ))}
+                            {/* Placeholders for remaining slots */}
+                            {Array.from({ length: Math.max(0, classicTotal - classicWinnersSoFar.length) }).map((_, idx) => (
+                                <div key={`placeholder-${idx}`} className={cn(
+                                    "rounded-full border border-dashed border-foreground-tertiary/50 bg-transparent",
+                                    getItemSizeClass(classicTotal)
+                                )} />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-wrap justify-center gap-2 opacity-50 max-w-3xl mx-auto">
+                            {Array.from({ length: classicTotal }).map((_, idx) => (
+                                <div key={`empty-${idx}`} className={cn(
+                                    "rounded-full border border-dashed border-foreground-tertiary bg-transparent",
+                                    getItemSizeClass(classicTotal)
+                                )} />
+                            ))}
+                        </div>
+                    )}
                 </div>
              )}
           </div>
         </div>
 
         {/* Status Info */}
-        <div className="mt-32 text-base text-foreground-secondary font-medium">
+        <div className="mt-48 text-base text-foreground-secondary font-medium">
           {winners.length > 0 && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {mode === "tournament" && roundInfo
