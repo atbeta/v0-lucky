@@ -274,60 +274,92 @@ export default function HomePage() {
         />
 
         {/* Main Content */}
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Top Bar */}
-          <TopBar
-            mode={mode}
-            focusMode={focusMode}
-            onToggleFocus={handleToggleFocus}
-            onToggleInspector={() => setInspectorVisible(!inspectorVisible)}
-          />
+        <div className="flex flex-1 flex-col overflow-hidden relative">
+          {/* TopBar */}
+          {currentView === "draw" && (
+            <TopBar
+              mode={mode}
+              focusMode={focusMode}
+              inspectorVisible={inspectorVisible}
+              onToggleFocus={handleToggleFocus}
+              onToggleInspector={() => setInspectorVisible(!inspectorVisible)}
+            />
+          )}
 
           {/* Stage + Inspector */}
           <div className="flex flex-1 overflow-hidden">
-            {/* Stage Area */}
-            <Stage
-              currentView={currentView}
-              mode={mode}
-              isDrawing={isDrawing}
-              winners={winners}
-              participants={participants}
-              onParticipantsChange={setParticipants}
-              autoExclude={autoExclude}
-              onAutoExcludeChange={setAutoExclude}
-              soundEnabled={soundEnabled}
-              onSoundToggle={() => setSoundEnabled(!soundEnabled)}
-              onModeChange={setMode}
-              onGoToDraw={() => setCurrentView("draw")}
-              roundInfo={mode === "tournament" ? {
-                current: currentRoundIndex + 1,
-                total: tournamentRounds.length,
-                name: tournamentRounds[currentRoundIndex].name,
-                isFinished: currentRoundFinished,
-                targetCount: tournamentRounds[currentRoundIndex].count,
-                winnersSoFar: roundWinners[currentRoundIndex] || []
-              } : undefined}
-              winnerCount={mode === "classic" ? getClassicBatchCount() : 1}
-              classicCount={classicCount}
-              onClassicCountChange={setClassicCount}
-              classicMethod={classicMethod}
-              onClassicMethodChange={setClassicMethod}
-              batchSize={batchSize}
-              onBatchSizeChange={setBatchSize}
-              tournamentRounds={tournamentRounds}
-              onTournamentRoundsChange={setTournamentRounds}
-              prizeName={prizeName}
-              onPrizeNameChange={setPrizeName}
-              classicTotal={mode === "classic" && classicMethod !== "all" ? classicCount : undefined}
-              classicWinnersSoFar={mode === "classic" && classicMethod !== "all" ? classicWinners : undefined}
-              historyRecords={historyRecords}
-              hideNamesWhileRolling={hideNamesWhileRolling}
-              onHideNamesWhileRollingChange={setHideNamesWhileRolling}
-              particleEffects={particleEffects}
-              onParticleEffectsChange={setParticleEffects}
-              lastCelebratedWinners={lastCelebratedWinners}
-              onCelebrationComplete={setLastCelebratedWinners}
-            />
+            
+            {/* Draw Area Wrapper (Stage + ControlBar) */}
+            <div className="flex flex-1 flex-col overflow-hidden relative">
+                {/* Stage Area */}
+                <Stage
+                  currentView={currentView}
+                  mode={mode}
+                  isDrawing={isDrawing}
+                  winners={winners}
+                  participants={participants}
+                  onParticipantsChange={setParticipants}
+                  autoExclude={autoExclude}
+                  onAutoExcludeChange={setAutoExclude}
+                  soundEnabled={soundEnabled}
+                  onSoundToggle={() => setSoundEnabled(!soundEnabled)}
+                  onModeChange={setMode}
+                  onGoToDraw={() => setCurrentView("draw")}
+                  roundInfo={mode === "tournament" ? {
+                    current: currentRoundIndex + 1,
+                    total: tournamentRounds.length,
+                    name: tournamentRounds[currentRoundIndex].name,
+                    isFinished: currentRoundFinished,
+                    targetCount: tournamentRounds[currentRoundIndex].count,
+                    winnersSoFar: roundWinners[currentRoundIndex] || []
+                  } : undefined}
+                  winnerCount={mode === "classic" ? getClassicBatchCount() : 1}
+                  classicCount={classicCount}
+                  onClassicCountChange={setClassicCount}
+                  classicMethod={classicMethod}
+                  onClassicMethodChange={setClassicMethod}
+                  batchSize={batchSize}
+                  onBatchSizeChange={setBatchSize}
+                  tournamentRounds={tournamentRounds}
+                  onTournamentRoundsChange={setTournamentRounds}
+                  prizeName={prizeName}
+                  onPrizeNameChange={setPrizeName}
+                  classicTotal={mode === "classic" && classicMethod !== "all" ? classicCount : undefined}
+                  classicWinnersSoFar={mode === "classic" && classicMethod !== "all" ? classicWinners : undefined}
+                  historyRecords={historyRecords}
+                  hideNamesWhileRolling={hideNamesWhileRolling}
+                  onHideNamesWhileRollingChange={setHideNamesWhileRolling}
+                  particleEffects={particleEffects}
+                  onParticleEffectsChange={setParticleEffects}
+                  lastCelebratedWinners={lastCelebratedWinners}
+                  onCelebrationComplete={setLastCelebratedWinners}
+                />
+
+                {/* Control Bar */}
+                {currentView === "draw" && (
+                  <ControlBar
+                    isDrawing={isDrawing}
+                    onStartDraw={handleStartDraw}
+                    onStopDraw={handleStopDraw}
+                    onReset={() => {
+                      setWinners([])
+                      setIsDrawing(false)
+                      setCurrentRoundIndex(0)
+                      setRoundWinners([])
+                      setClassicWinners([])
+                      setLastCelebratedWinners("")
+                    }}
+                    winners={winners}
+                    showNextRound={mode === "tournament" && 
+                       currentRoundFinished &&
+                       currentRoundIndex < tournamentRounds.length - 1}
+                    onNextRound={handleNextRound}
+                    isFinalRound={mode === "tournament" && currentRoundIndex === tournamentRounds.length - 1}
+                    isRoundFinished={currentRoundFinished}
+                    isClassicFinished={mode === "classic" && classicWinners.length >= classicCount}
+                  />
+                )}
+            </div>
 
             {/* Inspector Panel */}
             {inspectorVisible && !focusMode && currentView === "draw" && (
@@ -342,31 +374,6 @@ export default function HomePage() {
               />
             )}
           </div>
-
-          {/* Control Bar */}
-          {currentView === "draw" && (
-            <ControlBar
-              isDrawing={isDrawing}
-              onStartDraw={handleStartDraw}
-              onStopDraw={handleStopDraw}
-              onReset={() => {
-                setWinners([])
-                setIsDrawing(false)
-                setCurrentRoundIndex(0)
-                setRoundWinners([])
-                setClassicWinners([])
-                setLastCelebratedWinners("")
-              }}
-              winners={winners}
-              showNextRound={mode === "tournament" && 
-                 currentRoundFinished &&
-                 currentRoundIndex < tournamentRounds.length - 1}
-              onNextRound={handleNextRound}
-              isFinalRound={mode === "tournament" && currentRoundIndex === tournamentRounds.length - 1}
-              isRoundFinished={currentRoundFinished}
-              isClassicFinished={mode === "classic" && classicWinners.length >= classicCount}
-            />
-          )}
         </div>
       </div>
     </div>

@@ -83,150 +83,171 @@ export function DrawConfigView({
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border/50 px-6 py-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-            <Target className="h-5 w-5 text-primary" />
+      <header className="flex items-center justify-between border-b border-border-subtle px-8 py-6 bg-background/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
+            <Target className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">抽奖配置</h2>
-            <p className="text-xs text-muted-foreground">参与者 ({participantCount})</p>
+            <h1 className="text-2xl font-bold gradient-text">抽奖配置</h1>
+            <p className="text-sm text-foreground-secondary mt-0.5">参与者 ({participantCount}) · 配置抽奖规则</p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={onSoundToggle} className="h-8 w-8">
-          {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+        <Button variant="ghost" size="icon" onClick={onSoundToggle} className="h-10 w-10 rounded-full hover:bg-background-elevated">
+          {soundEnabled ? <Volume2 className="h-5 w-5 text-primary" /> : <VolumeX className="h-5 w-5 text-foreground-tertiary" />}
         </Button>
-      </div>
+      </header>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="mx-auto max-w-3xl space-y-6">
+      <div className="flex-1 overflow-y-auto p-8">
+        <div className="mx-auto max-w-3xl space-y-8">
           {/* Mode Selection */}
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <button
               onClick={() => onModeChange("classic")}
               className={cn(
-                "group relative flex items-start gap-4 rounded-xl border-2 p-5 text-left transition-all hover:border-primary/50",
-                mode === "classic" ? "border-primary bg-primary/5" : "border-border/50 bg-card/50",
+                "group relative flex items-start gap-4 rounded-2xl border-2 p-6 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-lg",
+                mode === "classic" 
+                  ? "border-primary bg-primary/5 shadow-md" 
+                  : "border-border-subtle bg-background-elevated hover:border-primary/50",
               )}
             >
               <div
                 className={cn(
-                  "flex h-12 w-12 shrink-0 items-center justify-center rounded-lg transition-colors",
-                  mode === "classic" ? "bg-primary/20" : "bg-muted",
+                  "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors",
+                  mode === "classic" ? "bg-primary/20" : "bg-background-overlay",
                 )}
               >
-                <Target className={cn("h-6 w-6", mode === "classic" ? "text-primary" : "text-muted-foreground")} />
+                <Target className={cn("h-6 w-6", mode === "classic" ? "text-primary" : "text-foreground-secondary")} />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold">经典模式</h3>
-                <p className="mt-1 text-xs text-muted-foreground">一轮抽出指定数量</p>
+                <h3 className={cn("font-bold text-lg", mode === "classic" ? "text-primary" : "text-foreground")}>经典模式</h3>
+                <p className="mt-1 text-sm text-foreground-secondary">一轮抽出指定数量，支持一次性或分批</p>
               </div>
             </button>
 
             <button
               onClick={() => onModeChange("tournament")}
               className={cn(
-                "group relative flex items-start gap-4 rounded-xl border-2 p-5 text-left transition-all hover:border-primary/50",
-                mode === "tournament" ? "border-primary bg-primary/5" : "border-border/50 bg-card/50",
+                "group relative flex items-start gap-4 rounded-2xl border-2 p-6 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-lg",
+                mode === "tournament" 
+                  ? "border-primary bg-primary/5 shadow-md" 
+                  : "border-border-subtle bg-background-elevated hover:border-primary/50",
               )}
             >
               <div
                 className={cn(
-                  "flex h-12 w-12 shrink-0 items-center justify-center rounded-lg transition-colors",
-                  mode === "tournament" ? "bg-primary/20" : "bg-muted",
+                  "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors",
+                  mode === "tournament" ? "bg-primary/20" : "bg-background-overlay",
                 )}
               >
-                <Trophy className={cn("h-6 w-6", mode === "tournament" ? "text-primary" : "text-muted-foreground")} />
+                <Trophy className={cn("h-6 w-6", mode === "tournament" ? "text-primary" : "text-foreground-secondary")} />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold">晋级模式</h3>
-                <p className="mt-1 text-xs text-muted-foreground">多轮晋级至最终获胜</p>
+                <h3 className={cn("font-bold text-lg", mode === "tournament" ? "text-primary" : "text-foreground")}>晋级模式</h3>
+                <p className="mt-1 text-sm text-foreground-secondary">多轮筛选晋级，最终决出大奖得主</p>
               </div>
             </button>
           </div>
 
           {/* Auto Exclude Toggle */}
-          <div className="flex items-center justify-between rounded-lg border border-border/50 bg-card/30 p-4">
-            <div className="flex items-center gap-3">
-              <Info className="h-4 w-4 text-muted-foreground" />
-              <Label htmlFor="auto-exclude" className="cursor-pointer text-sm font-medium">
-                中奖后自动排除
-              </Label>
+          <div className="flex items-center justify-between rounded-2xl border border-border-subtle bg-background-elevated p-6 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="h-10 w-10 rounded-full bg-background-overlay flex items-center justify-center">
+                <Info className="h-5 w-5 text-foreground-secondary" />
+              </div>
+              <div className="space-y-0.5">
+                <Label htmlFor="auto-exclude" className="cursor-pointer text-base font-medium">
+                  中奖后自动排除
+                </Label>
+                <p className="text-xs text-foreground-secondary">中奖者将不会参与后续抽奖</p>
+              </div>
             </div>
             <Switch id="auto-exclude" checked={autoExclude} onCheckedChange={onAutoExcludeChange} />
           </div>
 
           {/* Mode-specific Configuration */}
           {mode === "classic" && (
-            <div className="space-y-6 rounded-xl border border-border/50 bg-card/30 p-6">
+            <div className="space-y-6 rounded-2xl border border-border-subtle bg-background-elevated p-8 shadow-sm animate-in fade-in slide-in-from-bottom-2">
               {/* Winner Count */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">中奖人数</Label>
-                <div className="flex items-center gap-3">
+              <div className="space-y-4">
+                <Label className="text-base font-semibold">中奖人数</Label>
+                <div className="flex items-center gap-4 bg-background/50 p-4 rounded-xl border border-border-subtle">
                   <Input
                     type="number"
                     min="1"
                     max={participantCount}
                     value={classicCount}
                     onChange={(e) => onClassicCountChange(Math.max(1, Number.parseInt(e.target.value) || 1))}
-                    className="w-24 text-center"
+                    className="w-32 text-center h-12 text-xl font-bold bg-background"
                   />
-                  <span className="text-sm text-muted-foreground">人 / 共 {participantCount} 人</span>
+                  <div className="flex flex-col">
+                     <span className="text-sm font-medium">人</span>
+                     <span className="text-xs text-foreground-secondary">共 {participantCount} 人参与</span>
+                  </div>
                 </div>
               </div>
 
               {/* Drawing Method */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Info className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-sm font-medium">仪式感设置</Label>
+                  <Label className="text-base font-semibold">抽取方式</Label>
                 </div>
                 <RadioGroup value={classicMethod} onValueChange={(v) => onClassicMethodChange(v as any)}>
-                  <div className="space-y-2">
-                    <div className="flex items-start gap-3 rounded-lg border border-border/50 p-3 hover:bg-accent/50 transition-colors">
-                      <RadioGroupItem value="all" id="method-all" className="mt-0.5" />
+                  <div className="grid gap-3">
+                    <div className={cn(
+                        "flex items-start gap-4 rounded-xl border p-4 transition-all cursor-pointer",
+                        classicMethod === "one-by-one" ? "border-primary bg-primary/5" : "border-border-subtle bg-background/50 hover:bg-background"
+                    )}>
+                      <RadioGroupItem value="one-by-one" id="method-one" className="mt-1" />
                       <div className="flex-1">
-                        <Label htmlFor="method-all" className="cursor-pointer font-medium">
+                        <Label htmlFor="method-one" className="cursor-pointer font-bold flex items-center gap-2 text-base">
+                          逐个抽取
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary text-primary-foreground">推荐</span>
+                        </Label>
+                        <p className="text-sm text-foreground-secondary mt-1">每次点击抽取 1 人，仪式感最强，需点击 {classicCount} 次</p>
+                      </div>
+                    </div>
+
+                    <div className={cn(
+                        "flex items-start gap-4 rounded-xl border p-4 transition-all cursor-pointer",
+                        classicMethod === "all" ? "border-primary bg-primary/5" : "border-border-subtle bg-background/50 hover:bg-background"
+                    )}>
+                      <RadioGroupItem value="all" id="method-all" className="mt-1" />
+                      <div className="flex-1">
+                        <Label htmlFor="method-all" className="cursor-pointer font-bold text-base">
                           一次性全部抽出
                         </Label>
-                        <p className="text-xs text-muted-foreground">快速揭晓结果</p>
+                        <p className="text-sm text-foreground-secondary mt-1">直接展示所有 {classicCount} 位中奖者，效率最高</p>
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 rounded-lg border-2 border-primary/30 bg-primary/5 p-3">
-                      <RadioGroupItem value="one-by-one" id="method-one" className="mt-0.5" />
-                      <div className="flex-1">
-                        <Label htmlFor="method-one" className="cursor-pointer font-medium flex items-center gap-2">
-                          逐个抽取
-                          <span className="text-xs font-normal text-primary">推荐</span>
-                        </Label>
-                        <p className="text-xs text-muted-foreground">仪式感满满，需点击 {classicCount} 次</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 rounded-lg border border-border/50 p-3 hover:bg-accent/50 transition-colors">
-                      <RadioGroupItem value="batch" id="method-batch" className="mt-0.5" />
-                      <div className="flex-1 space-y-2">
+                    <div className={cn(
+                        "flex items-start gap-4 rounded-xl border p-4 transition-all cursor-pointer",
+                        classicMethod === "batch" ? "border-primary bg-primary/5" : "border-border-subtle bg-background/50 hover:bg-background"
+                    )}>
+                      <RadioGroupItem value="batch" id="method-batch" className="mt-1" />
+                      <div className="flex-1 space-y-3">
                         <div>
-                          <Label htmlFor="method-batch" className="cursor-pointer font-medium">
+                          <Label htmlFor="method-batch" className="cursor-pointer font-bold text-base">
                             分批抽取
                           </Label>
-                          <p className="text-xs text-muted-foreground">平衡速度与仪式感</p>
+                          <p className="text-sm text-foreground-secondary mt-1">按组进行抽取，平衡速度与仪式感</p>
                         </div>
                         {classicMethod === "batch" && (
-                          <div className="flex items-center gap-2 pl-1">
+                          <div className="flex items-center gap-3 pl-1 animate-in slide-in-from-top-2">
+                            <span className="text-sm">每批抽取</span>
                             <Input
                               type="number"
                               min="1"
                               max={classicCount}
                               value={batchSize}
                               onChange={(e) => onBatchSizeChange(Math.max(1, Number.parseInt(e.target.value) || 1))}
-                              className="w-20 text-center h-8"
+                              className="w-24 text-center h-9 bg-background"
                             />
-                            <span className="text-xs text-muted-foreground">人/次</span>
+                            <span className="text-sm text-foreground-secondary">人</span>
                           </div>
                         )}
                       </div>
@@ -236,83 +257,85 @@ export function DrawConfigView({
               </div>
 
               {/* Prize Name */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Trophy className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-sm font-medium">奖品设置</Label>
+              <div className="space-y-4">
+                <Label className="text-base font-semibold">奖品名称</Label>
+                <div className="relative">
+                   <Trophy className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-tertiary" />
+                   <Input
+                    placeholder="例如：一等奖 - iPhone 16 Pro"
+                    value={prizeName}
+                    onChange={(e) => onPrizeNameChange(e.target.value)}
+                    className="pl-10 bg-background h-11"
+                  />
                 </div>
-                <Input
-                  placeholder="输入奖品名称"
-                  value={prizeName}
-                  onChange={(e) => onPrizeNameChange(e.target.value)}
-                  className="bg-background"
-                />
               </div>
 
               {/* Summary */}
-              <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
-                <p className="text-sm text-foreground">
-                  <span className="font-medium">
-                    从 {participantCount}人 中抽出 {classicCount}位
-                  </span>
-                  {classicMethod === "one-by-one" && <span className="text-muted-foreground"> · 幸运儿</span>}
-                  {classicMethod === "batch" && (
-                    <span className="text-muted-foreground"> · 逐个抽取（{classicCount}次）</span>
-                  )}
-                  {classicMethod === "all" && (
-                    <span className="text-muted-foreground">
-                      {" "}
-                      · 分批抽取（共{Math.ceil(classicCount / batchSize)}批）
-                    </span>
-                  )}
+              <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 to-transparent p-4 flex items-center gap-3">
+                <Info className="h-5 w-5 text-primary" />
+                <p className="text-sm text-foreground font-medium">
+                  将从 {participantCount} 人中抽出 <span className="text-primary font-bold text-base">{classicCount}</span> 位幸运儿
+                  {classicMethod === "batch" && `，分 ${Math.ceil(classicCount / batchSize)} 批进行`}
                 </p>
               </div>
             </div>
           )}
 
           {mode === "tournament" && (
-            <div className="space-y-6 rounded-xl border border-border/50 bg-card/30 p-6">
+            <div className="space-y-6 rounded-2xl border border-border-subtle bg-background-elevated p-8 shadow-sm animate-in fade-in slide-in-from-bottom-2">
               {/* Tournament Rounds */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">晋级轮次</Label>
+                  <Label className="text-base font-semibold">晋级轮次设置</Label>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={addTournamentRound}
-                    className="h-7 gap-1.5 bg-transparent"
+                    className="h-8 gap-1.5 bg-transparent hover:bg-background"
                   >
                     <Plus className="h-3 w-3" />
                     添加轮次
                   </Button>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {tournamentRounds.map((round, index) => (
-                    <div key={round.id} className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-medium text-primary">
-                        {index === tournamentRounds.length - 1 ? <Trophy className="h-4 w-4" /> : `${index + 1}`}
+                    <div key={round.id} className="flex items-center gap-3 p-3 rounded-xl bg-background/50 border border-border-subtle hover:border-primary/30 transition-colors">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
+                        {index === tournamentRounds.length - 1 ? <Trophy className="h-4 w-4" /> : `R${index + 1}`}
                       </div>
-                      <div className="flex-1 flex items-center gap-2">
-                        <Input
-                          type="number"
-                          min="1"
-                          max={participantCount}
-                          value={round.count}
-                          onChange={(e) =>
-                            updateRoundCount(round.id, Math.max(1, Number.parseInt(e.target.value) || 1))
-                          }
-                          className="w-20 text-center h-9"
+                      <div className="flex-1 flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-foreground-secondary whitespace-nowrap">晋级人数</span>
+                            <Input
+                              type="number"
+                              min="1"
+                              max={participantCount}
+                              value={round.count}
+                              onChange={(e) =>
+                                updateRoundCount(round.id, Math.max(1, Number.parseInt(e.target.value) || 1))
+                              }
+                              className="w-20 text-center h-9 bg-background"
+                            />
+                        </div>
+                        <Input 
+                            placeholder={`第 ${index + 1} 轮名称 (可选)`}
+                            value={round.name}
+                            onChange={(e) => {
+                                const newRounds = [...tournamentRounds];
+                                newRounds[index].name = e.target.value;
+                                onTournamentRoundsChange(newRounds);
+                            }}
+                            className="flex-1 h-9 bg-background text-sm"
                         />
-                        <span className="text-sm text-muted-foreground">人</span>
                       </div>
-                      {index < tournamentRounds.length - 1 && <div className="text-muted-foreground">→</div>}
+                      {index < tournamentRounds.length - 1 && <div className="text-foreground-tertiary">→</div>}
                       {tournamentRounds.length > 1 && (
                         <Button
                           size="icon"
                           variant="ghost"
                           onClick={() => removeTournamentRound(round.id)}
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          className="h-8 w-8 text-foreground-tertiary hover:text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -323,22 +346,23 @@ export function DrawConfigView({
               </div>
 
               {/* Prize Name */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Trophy className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-sm font-medium">奖品设置</Label>
+              <div className="space-y-4">
+                <Label className="text-base font-semibold">奖品名称</Label>
+                <div className="relative">
+                   <Trophy className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-tertiary" />
+                   <Input
+                    placeholder="例如：年度总冠军大奖"
+                    value={prizeName}
+                    onChange={(e) => onPrizeNameChange(e.target.value)}
+                    className="pl-10 bg-background h-11"
+                  />
                 </div>
-                <Input
-                  placeholder="输入奖品名称"
-                  value={prizeName}
-                  onChange={(e) => onPrizeNameChange(e.target.value)}
-                  className="bg-background"
-                />
               </div>
 
               {/* Summary */}
-              <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
-                <p className="text-sm text-foreground">{getTournamentSummary()}</p>
+              <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 to-transparent p-4 flex items-center gap-3">
+                <Trophy className="h-5 w-5 text-primary" />
+                <p className="text-sm text-foreground font-medium">{getTournamentSummary()}</p>
               </div>
             </div>
           )}
@@ -346,10 +370,10 @@ export function DrawConfigView({
       </div>
 
       {/* Footer Action */}
-      <div className="flex items-center justify-end gap-3 border-t border-border/50 bg-card/30 px-6 py-4">
-        <Button size="lg" className="gap-2" onClick={onGoToDraw}>
-          <Target className="h-4 w-4" />
-          去抽奖
+      <div className="flex items-center justify-end gap-3 border-t border-border-subtle bg-background-elevated/80 px-8 py-6 backdrop-blur-sm">
+        <Button size="lg" className="gap-2 px-8 text-lg shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all" onClick={onGoToDraw}>
+          <Target className="h-5 w-5" />
+          开始抽奖
         </Button>
       </div>
     </div>

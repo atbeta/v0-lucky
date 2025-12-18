@@ -21,33 +21,37 @@ const navItems = [
 
 export function Sidebar({ collapsed, onToggle, currentView, onViewChange }: SidebarProps) {
   return (
-    <div
+    <aside
       className={cn(
-        "flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300",
-        collapsed ? "w-16" : "w-60",
+        "flex flex-col h-screen border-r border-border-subtle bg-background-elevated transition-all duration-300",
+        collapsed ? "w-20" : "w-64",
       )}
     >
       {/* Header */}
-      <div className="flex h-12 items-center justify-between border-b border-sidebar-border px-4">
+      <div className="flex h-16 items-center justify-between px-4 mb-2">
         {!collapsed && (
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
-              <Sparkles className="h-4 w-4 text-primary-foreground" />
+          <div className="flex items-center gap-3 pl-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-light to-primary-dark shadow-lg shadow-primary/20">
+              <Sparkles className="h-5 w-5 text-white" />
             </div>
+            <span className="font-bold text-lg gradient-text">Lucky</span>
           </div>
         )}
         <Button
           variant="ghost"
           size="icon"
           onClick={onToggle}
-          className={cn("h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent", collapsed && "mx-auto")}
+          className={cn(
+            "h-9 w-9 text-foreground-secondary hover:bg-background-overlay hover:text-primary rounded-lg transition-all", 
+            collapsed && "mx-auto"
+          )}
         >
-          <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
+          <ChevronLeft className={cn("h-5 w-5 transition-transform duration-300", collapsed && "rotate-180")} />
         </Button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-2">
+      <nav className="flex-1 flex flex-col gap-2 px-3">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = currentView === item.id
@@ -56,14 +60,19 @@ export function Sidebar({ collapsed, onToggle, currentView, onViewChange }: Side
               key={item.id}
               onClick={() => onViewChange(item.id)}
               className={cn(
-                "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                isActive && "bg-sidebar-accent text-sidebar-accent-foreground border-l-2 border-primary",
+                "group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
+                "hover:bg-background-overlay hover:text-primary active:scale-95",
+                isActive 
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary-light hover:text-white" 
+                  : "text-foreground-secondary",
                 collapsed && "justify-center px-2",
               )}
               title={collapsed ? item.label : undefined}
             >
-              <Icon className="h-5 w-5 shrink-0" />
+              <Icon className={cn(
+                "h-5 w-5 shrink-0 transition-transform duration-200 group-hover:scale-110",
+                isActive ? "text-white" : "text-foreground-secondary group-hover:text-primary"
+              )} />
               {!collapsed && <span>{item.label}</span>}
             </button>
           )
@@ -71,14 +80,20 @@ export function Sidebar({ collapsed, onToggle, currentView, onViewChange }: Side
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-sidebar-border p-4">
-        {!collapsed && (
-          <div className="text-xs text-muted-foreground">
-            <div className="font-medium">v2.0.0</div>
-            <div className="mt-1">Tauri + React</div>
+      <div className="p-4 mt-auto">
+        {!collapsed ? (
+          <div className="rounded-xl bg-background-overlay/50 p-4 border border-border-subtle/50">
+            <div className="text-xs text-foreground-secondary">
+              <div className="font-semibold text-foreground mb-1">v2.0.0</div>
+              <div>Tauri + React</div>
+            </div>
           </div>
+        ) : (
+           <div className="flex justify-center pb-2">
+             <div className="h-1.5 w-1.5 rounded-full bg-border-subtle" />
+           </div>
         )}
       </div>
-    </div>
+    </aside>
   )
 }
