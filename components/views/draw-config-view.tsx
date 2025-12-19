@@ -164,7 +164,7 @@ export function DrawConfigView({
               onClick={() => !isDrawing && onModeChange("classic")}
               disabled={isDrawing}
               className={cn(
-                "group relative flex items-start gap-4 rounded-2xl border-2 p-6 text-left transition-all duration-200",
+                "group relative flex items-start gap-4 rounded-2xl border-2 p-6 text-left transition-all duration-200 cursor-pointer",
                 mode === "classic" 
                   ? "border-primary bg-primary/5 shadow-md" 
                   : "border-border-subtle bg-background-elevated hover:border-primary/50",
@@ -189,7 +189,7 @@ export function DrawConfigView({
               onClick={() => !isDrawing && onModeChange("tournament")}
               disabled={isDrawing}
               className={cn(
-                "group relative flex items-start gap-4 rounded-2xl border-2 p-6 text-left transition-all duration-200",
+                "group relative flex items-start gap-4 rounded-2xl border-2 p-6 text-left transition-all duration-200 cursor-pointer",
                 mode === "tournament" 
                   ? "border-primary bg-primary/5 shadow-md" 
                   : "border-border-subtle bg-background-elevated hover:border-primary/50",
@@ -212,13 +212,16 @@ export function DrawConfigView({
           </div>
 
           {/* Auto Exclude Toggle */}
-          <div className="flex items-center justify-between rounded-2xl border border-border-subtle bg-background-elevated p-6 shadow-sm">
+          <div 
+            className="flex items-center justify-between rounded-2xl border border-border-subtle bg-background-elevated p-6 shadow-sm cursor-pointer hover:border-primary/30 transition-all duration-200"
+            onClick={() => onAutoExcludeChange(!autoExclude)}
+          >
             <div className="flex items-center gap-4">
               <div className="h-10 w-10 rounded-full bg-background-overlay flex items-center justify-center">
                 <Info className="h-5 w-5 text-foreground-secondary" />
               </div>
               <div className="space-y-0.5">
-                <Label htmlFor="auto-exclude" className="cursor-pointer text-base font-medium">
+                <Label htmlFor="auto-exclude" className="cursor-pointer text-base font-medium pointer-events-none">
                   中奖后自动排除
                 </Label>
                 <p className="text-xs text-foreground-secondary">中奖者将不会参与后续抽奖</p>

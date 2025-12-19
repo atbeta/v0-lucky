@@ -17,7 +17,7 @@ interface Participant {
 interface DrawViewProps {
   mode: "classic" | "tournament"
   isDrawing: boolean
-  winners: string[]
+  winners: Participant[]
   participants: Participant[]
   roundInfo?: {
     current: number
@@ -25,7 +25,7 @@ interface DrawViewProps {
     name: string
     isFinished: boolean
     targetCount: number
-    winnersSoFar: string[]
+    winnersSoFar: Participant[]
   }
   winnerCount: number
   // Settings
@@ -38,7 +38,8 @@ interface DrawViewProps {
   lastCelebratedWinners?: string
   onCelebrationComplete?: (winnersKey: string) => void
   classicTotal?: number
-  classicWinnersSoFar?: string[]
+  classicWinnersSoFar?: Participant[]
+  candidates?: Participant[]
 }
 
 export function DrawView({ 
@@ -57,7 +58,8 @@ export function DrawView({
   onSoundToggle,
   onHideNamesToggle,
   lastCelebratedWinners = "",
-  onCelebrationComplete = () => {}
+  onCelebrationComplete = () => {},
+  candidates
 }: DrawViewProps) {
   const [rollingNames, setRollingNames] = useState<string[]>([])
   const bgmRef = useRef<HTMLAudioElement | null>(null)
@@ -67,7 +69,7 @@ export function DrawView({
   const getItemSizeClass = (count: number) => {
     if (count > 20) return "h-8 w-20 text-xs"
     if (count > 10) return "h-9 w-24 text-xs"
-    return "h-9 w-32 text-sm"
+    return "h-9 w-28 text-sm"
   }
 
   // Initialize Audio
@@ -152,7 +154,8 @@ export function DrawView({
   useEffect(() => {
     if (isDrawing) {
       const interval = setInterval(() => {
-        const availableParticipants = participants.filter((p) => !p.excluded)
+        // Use provided candidates if available, otherwise filter participants
+        const availableParticipants = candidates || participants.filter((p) => !p.excluded)
         if (availableParticipants.length > 0) {
            const count = Math.max(1, winnerCount)
            const currentRolling: string[] = []
@@ -274,7 +277,7 @@ export function DrawView({
               {/* Tournament Info */}
               {mode === "tournament" && roundInfo && (
                 <div className="mt-2 flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary border border-primary/20">
-                   <span>第 {roundInfo.current} / {roundInfo.total} 轮</span>
+                   <span>第 {roundInfo.current} / {roundInfo.total} 轮{roundInfo.name ? ` · ${roundInfo.name}` : ''}</span>
                 </div>
               )}
 
@@ -306,7 +309,7 @@ export function DrawView({
                                    ? "text-5xl bg-background-elevated/80 px-8 py-4 rounded-2xl border border-primary/30 text-primary shadow-xl backdrop-blur-md" 
                                    : "text-9xl gradient-text drop-shadow-[0_0_15px_rgba(var(--primary),0.3)]"
                              )}>
-                                 {winner}
+                                 {winner.name}
                              </div>
                         </div>
                     ))
@@ -321,7 +324,7 @@ export function DrawView({
           </div>
           
           {/* Progress Indicators Below Stage */}
-          <div className="absolute top-full mt-8 left-0 right-0 max-h-[120px] overflow-y-auto custom-scrollbar px-4">
+          <div className="absolute top-full mt-6 left-0 right-0 max-h-[90px] overflow-y-auto custom-scrollbar px-4">
              {/* Tournament Round Progress */}
              {mode === "tournament" && roundInfo && (
                 <div className="w-full">
@@ -341,11 +344,11 @@ export function DrawView({
                                             <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold">
                                                 {idx + 1}
                                             </div>
-                                            <span className="truncate">{winner}</span>
+                                            <span className="truncate">{winner.name}</span>
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                        <p>{winner}</p>
+                                        <p>{winner.name}</p>
                                     </TooltipContent>
                                 </Tooltip>
                             ))}
@@ -389,11 +392,11 @@ export function DrawView({
                                             <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold">
                                                 {idx + 1}
                                             </div>
-                                            <span className="truncate">{winner}</span>
+                                            <span className="truncate">{winner.name}</span>
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                        <p>{winner}</p>
+                                        <p>{winner.name}</p>
                                     </TooltipContent>
                                 </Tooltip>
                             ))}
@@ -421,7 +424,7 @@ export function DrawView({
         </div>
 
         {/* Status Info */}
-        <div className="mt-48 text-base text-foreground-secondary font-medium">
+        <div className="mt-32 text-base text-foreground-secondary font-medium">
           {winners.length > 0 && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {mode === "tournament" && roundInfo

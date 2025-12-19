@@ -23,16 +23,16 @@ interface HistoryRecord {
   date: string
   mode: "classic" | "tournament"
   prizeName: string
-  winners: string[]
+  winners: Participant[]
   totalParticipants: number
-  rounds?: { name: string; winners: string[] }[]
+  rounds?: { name: string; winners: Participant[] }[]
 }
 
 interface StageProps {
   currentView: "draw" | "participants" | "prizes" | "history" | "settings"
   mode: "classic" | "tournament"
   isDrawing: boolean
-  winners: string[]
+  winners: Participant[]
   participants: Participant[]
   onParticipantsChange: (participants: Participant[]) => void
   autoExclude: boolean
@@ -47,7 +47,7 @@ interface StageProps {
     name: string
     isFinished: boolean
     targetCount: number
-    winnersSoFar: string[]
+    winnersSoFar: Participant[]
   }
   winnerCount: number
   
@@ -65,7 +65,7 @@ interface StageProps {
   
   // Classic Batch
   classicTotal?: number
-  classicWinnersSoFar?: string[]
+  classicWinnersSoFar?: Participant[]
   
   // Settings Props
   hideNamesWhileRolling?: boolean
@@ -75,10 +75,12 @@ interface StageProps {
   // soundEnabled and onSoundToggle are already present
   
   // Confetti State Lifting
-  lastCelebratedWinners?: string
+ lastCelebratedWinners?: string
   onCelebrationComplete?: (winnersKey: string) => void
   onResetConfig?: () => void
   onClearHistory?: () => void
+  historyRecords?: any[]
+  candidates?: Participant[]
 }
 
 export function Stage({
@@ -117,6 +119,7 @@ export function Stage({
   onCelebrationComplete = () => {},
   onResetConfig = () => {},
   onClearHistory = () => {},
+  candidates,
 }: StageProps) {
   return (
     <div className="flex-1 overflow-hidden bg-stage relative">
@@ -138,6 +141,7 @@ export function Stage({
           onHideNamesToggle={() => onHideNamesWhileRollingChange(!hideNamesWhileRolling)}
           lastCelebratedWinners={lastCelebratedWinners}
           onCelebrationComplete={onCelebrationComplete}
+          candidates={candidates}
         />
       )}
       {currentView === "participants" && (

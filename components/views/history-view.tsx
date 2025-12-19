@@ -8,6 +8,7 @@ import { Clock, Trophy, Users, Calendar, Download, Eye, ChevronRight, Trash2 } f
 import { cn } from "@/lib/utils"
 import { isTauri } from "@tauri-apps/api/core"
 import { useToast } from "@/hooks/use-toast"
+import { Participant } from "@/types"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,10 +26,10 @@ interface HistoryRecord {
   date: string
   mode: "classic" | "tournament"
   prizeName: string
-  winners: string[]
+  winners: Participant[]
   totalParticipants: number
-  rounds?: { name: string; winners: string[] }[]
-  participantsSnapshot?: { id: number; name: string; weight: number; excluded: boolean }[]
+  rounds?: { name: string; winners: Participant[] }[]
+  participantsSnapshot?: Participant[]
 }
 
 interface HistoryViewProps {
@@ -195,9 +196,9 @@ export function HistoryView({ records = [], onClearHistory = () => {} }: History
                         className="flex items-center gap-2 rounded-lg border border-border-subtle bg-background/50 px-3 py-1.5 transition-colors group-hover:bg-background group-hover:border-primary/20"
                       >
                         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                          {winner.charAt(0)}
+                          {winner.name.charAt(0)}
                         </div>
-                        <span className="text-sm font-medium">{winner}</span>
+                        <span className="text-sm font-medium">{winner.name}</span>
                       </div>
                     ))}
                     {record.winners.length > 5 && (
@@ -284,7 +285,7 @@ export function HistoryView({ records = [], onClearHistory = () => {} }: History
                                </div>
                                <div className="flex flex-col min-w-0">
                                   <span className="text-[10px] text-foreground-tertiary">获胜者</span>
-                                  <span className="text-sm font-bold gradient-text truncate">{winner}</span>
+                                  <span className="text-sm font-bold gradient-text truncate">{winner.name}</span>
                                </div>
                             </div>
                             <div className="text-lg font-bold text-primary/10">#{idx + 1}</div>
@@ -310,7 +311,7 @@ export function HistoryView({ records = [], onClearHistory = () => {} }: History
                      <div className="flex flex-wrap gap-1.5 pl-7">
                        {round.winners.map((winner, wIdx) => (
                           <div key={wIdx} className="flex items-center gap-1.5 rounded border border-border-subtle bg-background/30 px-1.5 py-0.5 text-[10px] hover:bg-background transition-colors">
-                            {winner}
+                            {winner.name}
                           </div>
                        ))}
                      </div>
@@ -328,7 +329,7 @@ export function HistoryView({ records = [], onClearHistory = () => {} }: History
                                 </div>
                                 <div className="flex flex-col min-w-0">
                                    <span className="text-[10px] text-foreground-tertiary">获胜者</span>
-                                   <span className="text-xs font-bold gradient-text truncate">{winner}</span>
+                                   <span className="text-xs font-bold gradient-text truncate">{winner.name}</span>
                                 </div>
                              </div>
                           </div>
@@ -339,23 +340,23 @@ export function HistoryView({ records = [], onClearHistory = () => {} }: History
              )}
 
              {/* Participants Snapshot */}
-             {selectedRecord?.participantsSnapshot && selectedRecord.participantsSnapshot.length > 0 && (
-               <div className="space-y-2 pt-3 border-t border-border-subtle">
-                 <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-semibold text-foreground-secondary uppercase tracking-wider flex items-center gap-2">
-                    <Users className="h-3.5 w-3.5" />
-                    参与人员 (共 {selectedRecord.participantsSnapshot.length} 人)
-                    </h4>
-                    {selectedRecord.participantsSnapshot.length > 20 && (
-                        <span className="text-[10px] text-foreground-tertiary">滚动查看更多</span>
-                    )}
-                 </div>
-                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-[120px] overflow-y-auto pr-2 custom-scrollbar">
-                   {selectedRecord.participantsSnapshot.map((p) => {
-                     const isWinner = selectedRecord.winners.includes(p.name);
-                     return (
-                       <div 
-                         key={p.id} 
+            {selectedRecord?.participantsSnapshot && selectedRecord.participantsSnapshot.length > 0 && (
+              <div className="space-y-2 pt-3 border-t border-border-subtle">
+                <div className="flex items-center justify-between">
+                   <h4 className="text-xs font-semibold text-foreground-secondary uppercase tracking-wider flex items-center gap-2">
+                   <Users className="h-3.5 w-3.5" />
+                   参与人员 (共 {selectedRecord.participantsSnapshot.filter(p => !p.excluded).length} 人)
+                   </h4>
+                   {selectedRecord.participantsSnapshot.filter(p => !p.excluded).length > 20 && (
+                       <span className="text-[10px] text-foreground-tertiary">滚动查看更多</span>
+                   )}
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-[120px] overflow-y-auto pr-2 custom-scrollbar">
+                  {selectedRecord.participantsSnapshot.filter(p => !p.excluded).map((p) => {
+                    const isWinner = selectedRecord.winners.some(w => w.id === p.id);
+                    return (
+                      <div 
+                        key={p.id} 
                          className={cn(
                            "flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 transition-colors hover:bg-background/60",
                            isWinner 

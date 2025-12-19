@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button"
 import { Play, Square, RotateCcw, Copy, ChevronRight, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { Participant } from "@/types"
 
 interface ControlBarProps {
   isDrawing: boolean
   onStartDraw: () => void
   onStopDraw: () => void
   onReset: () => void
-  winners: string[]
+  winners: Participant[]
   showNextRound?: boolean
   onNextRound?: () => void
   isFinalRound?: boolean
@@ -34,7 +35,7 @@ export function ControlBar({
 
   const handleCopy = () => {
     if (winners.length > 0) {
-      navigator.clipboard.writeText(winners.join(", "))
+      navigator.clipboard.writeText(winners.map(w => w.name).join(", "))
       toast({
         title: "复制成功",
         description: `已复制 ${winners.length} 位中奖者名单`,

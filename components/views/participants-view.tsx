@@ -34,8 +34,9 @@ export function ParticipantsView({ participants, onParticipantsChange }: Partici
 
   const handleAdd = () => {
     if (!newName.trim()) return
+    const maxId = participants.length > 0 ? Math.max(...participants.map(p => p.id)) : 0
     const newParticipant = {
-      id: Date.now(),
+      id: maxId + 1,
       name: newName.trim(),
       weight: Number.parseInt(newWeight) || 1,
       excluded: false,
@@ -208,8 +209,12 @@ export function ParticipantsView({ participants, onParticipantsChange }: Partici
           }
 
           // 无论是否重复，都添加（保留原始名字）
+          // Find max ID dynamically to avoid collisions
+          const currentMaxId = participants.length > 0 ? Math.max(...participants.map(p => p.id)) : 0
+          const baseId = Math.max(currentMaxId, Date.now()) // Use larger of existing max or timestamp to be safe
+          
           validParticipants.push({
-            id: Date.now() + index + Math.floor(Math.random() * 10000), // 增加随机数防止ID冲突
+            id: baseId + index + 1, 
             name: p.name,
             weight: p.weight > 0 ? p.weight : 1,
             excluded: p.excluded || false

@@ -8,16 +8,17 @@ import { ControlBar } from "@/components/control-bar"
 import { TopBar } from "@/components/top-bar"
 import { WindowTitlebar } from "@/components/window-titlebar"
 import { isTauri, invoke } from "@tauri-apps/api/core"
+import { Participant } from "@/types"
 
 interface HistoryRecord {
   id: number
   date: string
   mode: "classic" | "tournament"
   prizeName: string
-  winners: string[]
+  winners: Participant[]
   totalParticipants: number
-  rounds?: { name: string; winners: string[] }[]
-  participantsSnapshot?: { id: number; name: string; weight: number; excluded: boolean }[]
+  rounds?: { name: string; winners: Participant[] }[]
+  participantsSnapshot?: Participant[]
 }
 
 export default function HomePage() {
@@ -29,7 +30,7 @@ export default function HomePage() {
   // Lottery state
   const [mode, setMode] = useState<"classic" | "tournament">("classic")
   const [isDrawing, setIsDrawing] = useState(false)
-  const [winners, setWinners] = useState<string[]>([])
+  const [winners, setWinners] = useState<Participant[]>([])
   const [autoExclude, setAutoExclude] = useState(true)
   const [soundEnabled, setSoundEnabled] = useState(true)
   
@@ -55,9 +56,9 @@ export default function HomePage() {
     { id: 3, count: 1, name: "最终轮" },
   ])
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0)
-  const [roundWinners, setRoundWinners] = useState<string[][]>([]) // Store winners of each round
+  const [roundWinners, setRoundWinners] = useState<Participant[][]>([]) // Store winners of each round
 
-  const [participants, setParticipants] = useState<any[]>([])
+  const [participants, setParticipants] = useState<Participant[]>([])
 
   // Persistence Logic
   const [isLoaded, setIsLoaded] = useState(false)
@@ -111,7 +112,16 @@ export default function HomePage() {
             const historyContent = await readTextFile(historyPath);
             const parsedHistory = JSON.parse(historyContent);
             if (Array.isArray(parsedHistory) && parsedHistory.length > 0) {
-              setHistoryRecords(parsedHistory);
+              // Validate format (check if winners are objects, not strings)
+              const firstWinner = parsedHistory[0].winners?.[0];
+              const isNewFormat = typeof firstWinner === 'object' || firstWinner === undefined; // undefined if empty winners array
+              
+              if (isNewFormat) {
+                setHistoryRecords(parsedHistory);
+              } else {
+                console.warn("Detected old history format, clearing history.");
+                setHistoryRecords([]);
+              }
             }
           }
         } catch (e) {
@@ -138,7 +148,16 @@ export default function HomePage() {
           try {
             const parsedHistory = JSON.parse(storedHistory)
             if (Array.isArray(parsedHistory) && parsedHistory.length > 0) {
-                setHistoryRecords(parsedHistory)
+                // Validate format (check if winners are objects, not strings)
+                const firstWinner = parsedHistory[0].winners?.[0];
+                const isNewFormat = typeof firstWinner === 'object' || firstWinner === undefined;
+                
+                if (isNewFormat) {
+                   setHistoryRecords(parsedHistory)
+                } else {
+                   console.warn("Detected old history format in LS, clearing history.");
+                   setHistoryRecords([]);
+                }
             }
           } catch (e) {
             console.error("Failed to load history from LS", e)
@@ -234,7 +253,7 @@ export default function HomePage() {
     tournamentRounds
   ])
 
-  const [classicWinners, setClassicWinners] = useState<string[]>([]) // Track all winners in classic mode
+  const [classicWinners, setClassicWinners] = useState<Participant[]>([]) // Track all winners in classic mode
 
   const handleToggleFocus = () => {
     setFocusMode(!focusMode)
@@ -268,14 +287,14 @@ export default function HomePage() {
     if (mode === "classic") {
       // In classic mode, pick from currently not excluded participants
       // Also exclude already won in THIS session (if using batch)
-      availableParticipants = participants.filter((p) => !p.excluded && !classicWinners.includes(p.name))
+      availableParticipants = participants.filter((p) => !p.excluded && !classicWinners.some(w => w.id === p.id))
     } else {
       // In tournament mode
       if (currentRoundIndex === 0) {
         // First round: pick from all not excluded
         // Also exclude already won in THIS round
         const currentRoundWinnersSoFar = roundWinners[currentRoundIndex] || []
-        availableParticipants = participants.filter((p) => !p.excluded && !currentRoundWinnersSoFar.includes(p.name))
+        availableParticipants = participants.filter((p) => !p.excluded && !currentRoundWinnersSoFar.some(w => w.id === p.id))
       } else {
         // Subsequent rounds: pick from winners of previous round
         // Make sure roundWinners[currentRoundIndex - 1] exists
@@ -284,8 +303,8 @@ export default function HomePage() {
         const currentRoundWinnersSoFar = roundWinners[currentRoundIndex] || []
         
         availableParticipants = participants.filter(p => 
-            previousRoundWinners.includes(p.name) && 
-            !currentRoundWinnersSoFar.includes(p.name) &&
+            previousRoundWinners.some(w => w.id === p.id) && 
+            !currentRoundWinnersSoFar.some(w => w.id === p.id) &&
             !p.excluded
         )
       }
@@ -324,7 +343,7 @@ export default function HomePage() {
          count = 1
     }
 
-    const winnersList: string[] = []
+    const winnersList: Participant[] = []
     const tempParticipants = [...availableParticipants]
     
     // Check if we have enough participants
@@ -338,7 +357,7 @@ export default function HomePage() {
       if (tempParticipants.length === 0) break
       const randomIndex = Math.floor(Math.random() * tempParticipants.length)
       const winner = tempParticipants[randomIndex]
-      winnersList.push(winner.name)
+      winnersList.push(winner)
       // Remove from temp list to avoid double picking in same batch
       tempParticipants.splice(randomIndex, 1)
     }
@@ -355,7 +374,7 @@ export default function HomePage() {
 
          // Auto exclude logic for Classic
          if (autoExclude) {
-             setParticipants(participants.map((p) => (winnersList.includes(p.name) ? { ...p, excluded: true } : p)))
+             setParticipants(participants.map((p) => (winnersList.some(w => w.id === p.id) ? { ...p, excluded: true } : p)))
          }
          
          // Save History if finished
@@ -366,10 +385,10 @@ export default function HomePage() {
                  mode: "classic",
                  prizeName: prizeName || "未命名奖品",
                  winners: newClassicWinners,
-                 totalParticipants: participants.length,
-                 participantsSnapshot: participants // Store snapshot of current participants
-             }
-             setHistoryRecords([newRecord, ...historyRecords])
+                totalParticipants: participants.filter(p => !p.excluded).length,
+                participantsSnapshot: participants // Store snapshot of current participants
+            }
+            setHistoryRecords([newRecord, ...historyRecords])
          }
     } else {
          // Tournament Mode
@@ -398,9 +417,9 @@ export default function HomePage() {
                  mode: "tournament",
                  prizeName: prizeName || "未命名奖品",
                  winners: updatedRoundWinners, // Final winners
-                 totalParticipants: participants.length,
-                 rounds: tournamentRounds.map((r, idx) => ({
-                     name: r.name,
+                totalParticipants: participants.filter(p => !p.excluded).length,
+                rounds: tournamentRounds.map((r, idx) => ({
+                    name: r.name,
                      winners: newRoundWinners[idx] || []
                  })),
                  participantsSnapshot: participants // Store snapshot of current participants
@@ -429,7 +448,7 @@ export default function HomePage() {
   }
 
   const currentRoundFinished = mode === "tournament" && 
-      (roundWinners[currentRoundIndex]?.length || 0) >= tournamentRounds[currentRoundIndex].count
+      (roundWinners[currentRoundIndex]?.length || 0) >= (tournamentRounds[currentRoundIndex]?.count || 0)
 
   const showNextRound = mode === "tournament" && 
       currentRoundFinished &&
@@ -502,6 +521,29 @@ export default function HomePage() {
      setHistoryRecords([])
   }
 
+  // Calculate candidates for rolling animation
+   const getRollingCandidates = () => {
+     if (mode === "classic") {
+       return participants.filter((p) => !p.excluded && !classicWinners.some(w => w.id === p.id))
+     } else {
+       // Tournament
+       if (currentRoundIndex === 0) {
+         const currentRoundWinnersSoFar = roundWinners[currentRoundIndex] || []
+         return participants.filter((p) => !p.excluded && !currentRoundWinnersSoFar.some(w => w.id === p.id))
+       } else {
+         const previousRoundWinners = roundWinners[currentRoundIndex - 1] || []
+         const currentRoundWinnersSoFar = roundWinners[currentRoundIndex] || []
+         return participants.filter(p => 
+             previousRoundWinners.some(w => w.id === p.id) && 
+             !currentRoundWinnersSoFar.some(w => w.id === p.id) &&
+             !p.excluded
+         )
+       }
+     }
+   }
+
+  const rollingCandidates = getRollingCandidates()
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
       <WindowTitlebar />
@@ -550,9 +592,9 @@ export default function HomePage() {
                   roundInfo={mode === "tournament" ? {
                     current: currentRoundIndex + 1,
                     total: tournamentRounds.length,
-                    name: tournamentRounds[currentRoundIndex].name,
+                    name: tournamentRounds[currentRoundIndex]?.name || "",
                     isFinished: currentRoundFinished,
-                    targetCount: tournamentRounds[currentRoundIndex].count,
+                    targetCount: tournamentRounds[currentRoundIndex]?.count || 0,
                     winnersSoFar: roundWinners[currentRoundIndex] || []
                   } : undefined}
                   winnerCount={mode === "classic" ? getClassicBatchCount() : 1}
@@ -577,6 +619,7 @@ export default function HomePage() {
                   onCelebrationComplete={setLastCelebratedWinners}
                   onResetConfig={handleResetConfig}
                   onClearHistory={handleClearHistory}
+                  candidates={rollingCandidates}
                 />
 
                 {/* Control Bar */}
