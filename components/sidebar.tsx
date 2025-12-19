@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, Sparkles, Users, Clock, SettingsIcon, Target } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface SidebarProps {
   collapsed: boolean
@@ -54,25 +55,52 @@ export function Sidebar({ collapsed, onToggle, currentView, onViewChange }: Side
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = currentView === item.id
+          
+          if (collapsed) {
+            return (
+              <Tooltip key={item.id} delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => onViewChange(item.id)}
+                    className={cn(
+                      "group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 cursor-pointer",
+                      "hover:bg-background-overlay hover:text-primary active:scale-95",
+                      isActive 
+                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary-light hover:text-white" 
+                        : "text-foreground-secondary",
+                      "justify-center px-2"
+                    )}
+                  >
+                    <Icon className={cn(
+                      "h-5 w-5 shrink-0 transition-transform duration-200 group-hover:scale-110",
+                      isActive ? "text-white" : "text-foreground-secondary group-hover:text-primary"
+                    )} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>{item.label}</p>
+                </TooltipContent>
+              </Tooltip>
+            )
+          }
+
           return (
             <button
               key={item.id}
               onClick={() => onViewChange(item.id)}
               className={cn(
-                "group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
+                "group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 cursor-pointer",
                 "hover:bg-background-overlay hover:text-primary active:scale-95",
                 isActive 
                   ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary-light hover:text-white" 
                   : "text-foreground-secondary",
-                collapsed && "justify-center px-2",
               )}
-              title={collapsed ? item.label : undefined}
             >
               <Icon className={cn(
                 "h-5 w-5 shrink-0 transition-transform duration-200 group-hover:scale-110",
                 isActive ? "text-white" : "text-foreground-secondary group-hover:text-primary"
               )} />
-              {!collapsed && <span>{item.label}</span>}
+              <span>{item.label}</span>
             </button>
           )
         })}

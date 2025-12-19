@@ -430,7 +430,7 @@ export function DrawView({
                 {mode === "tournament" && roundInfo
                     ? roundInfo.isFinished
                         ? roundInfo.current === roundInfo.total 
-                            ? <span className="gradient-text font-bold text-lg">最终大奖揭晓！恭喜 {winners.length} 位获得最终胜利 🎉</span> 
+                            ? <span className="gradient-text font-bold text-lg">最终结果揭晓！恭喜这 {roundInfo.winnersSoFar.length} 位获得最终大奖 🎉</span> 
                             : `本轮结束！恭喜 ${roundInfo.winnersSoFar.length} 位晋级下一轮 🎉`
                         : roundInfo.current === roundInfo.total
                              ? "恭喜中奖！🎉" // Final round
