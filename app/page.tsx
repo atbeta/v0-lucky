@@ -355,11 +355,28 @@ export default function HomePage() {
     // Draw 'count' winners
     for (let i = 0; i < count; i++) {
       if (tempParticipants.length === 0) break
-      const randomIndex = Math.floor(Math.random() * tempParticipants.length)
-      const winner = tempParticipants[randomIndex]
+      
+      // Weighted Random Selection
+      const totalWeight = tempParticipants.reduce((sum, p) => sum + (p.weight || 1), 0)
+      let randomValue = Math.random() * totalWeight
+      let selectedIndex = -1
+
+      for (let j = 0; j < tempParticipants.length; j++) {
+        const weight = tempParticipants[j].weight || 1
+        randomValue -= weight
+        if (randomValue <= 0) {
+          selectedIndex = j
+          break
+        }
+      }
+
+      // Fallback protection
+      if (selectedIndex === -1) selectedIndex = tempParticipants.length - 1
+
+      const winner = tempParticipants[selectedIndex]
       winnersList.push(winner)
       // Remove from temp list to avoid double picking in same batch
-      tempParticipants.splice(randomIndex, 1)
+      tempParticipants.splice(selectedIndex, 1)
     }
 
     // Update winners state
